@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards de Chinês</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-secondary: #666666;
+            --primary-color: #e74c3c;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        header {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 400px;
+            min-height: 250px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            padding: 30px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .card:active {
+            transform: scale(0.98);
+        }
+        .hanzi {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .details {
+            display: none; /* Escondido por padrão */
+            flex-direction: column;
+            align-items: center;
+        }
+        .pinyin {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        .portuguese {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        .sentence {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+        .hint {
+            font-size: 0.9rem;
+            color: #999;
+            margin-top: 20px;
+        }
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span>Vocabulário PKU</span>
+        <span id="counter">1 / 10</span>
+    </header>
+
+    <div class="card" onclick="toggleCard()">
+        <div class="hanzi" id="hanzi">北京大学</div>
+        
+        <div class="details" id="details">
+            <div class="pinyin" id="pinyin">Běijīng Dàxué</div>
+            <div class="portuguese" id="portuguese">Universidade de Pequim</div>
+            <div class="sentence" id="sentence">我在北京大学学习。(Eu estudo na Universidade de Pequim.)</div>
+        </div>
+
+        <div class="hint" id="hint">Toque no cartão para revelar</div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="nextCard()">Próxima</button>
+    </div>
+
+    <script>
+        // Adicionei os primeiros itens da sua lista com frases de exemplo.
+        // Você pode copiar e colar o restante seguindo esta mesma estrutura.
+        const flashcards = [
+            { hanzi: "北京大学", pinyin: "Běijīng Dàxué", pt: "Universidade de Pequim (PKU)", sentence: "他在北京大学学习。(Ele estuda na Universidade de Pequim.)" },
+            { hanzi: "留学生", pinyin: "liúxuéshēng", pt: "Estudante internacional", sentence: "我们都是留学生。(Nós somos estudantes internacionais.)" },
+            { hanzi: "宿舍", pinyin: "sùshè", pt: "Dormitório / Alojamento", sentence: "我的宿舍很大。(Meu dormitório é grande.)" },
+            { hanzi: "食堂", pinyin: "shítáng", pt: "Refeitório universitário", sentence: "我们去食堂吃饭吧。(Vamos comer no refeitório.)" },
+            { hanzi: "校园卡", pinyin: "xiàoyuán kǎ", pt: "Cartão do campus", sentence: "我没有校园卡。(Eu não tenho o cartão do campus.)" },
+            { hanzi: "教室", pinyin: "jiàoshì", pt: "Sala de aula", sentence: "教室里没有人。(Não há ninguém na sala de aula.)" },
+            { hanzi: "老师", pinyin: "lǎoshī", pt: "Professor", sentence: "王老师是我的汉语老师。(O professor Wang é meu professor de chinês.)" },
+            { hanzi: "宫保鸡丁", pinyin: "gōngbǎo jīdīng", pt: "Frango Xadrez", sentence: "我最喜欢吃宫保鸡丁。(Eu adoro comer frango xadrez.)" }
+        ];
+
+        let currentIndex = 0;
+        let isRevealed = false;
+
+        const hanziEl = document.getElementById('hanzi');
+        const detailsEl = document.getElementById('details');
+        const pinyinEl = document.getElementById('pinyin');
+        const portugueseEl = document.getElementById('portuguese');
+        const sentenceEl = document.getElementById('sentence');
+        const hintEl = document.getElementById('hint');
+        const counterEl = document.getElementById('counter');
+
+        function loadCard(index) {
+            const card = flashcards[index];
+            hanziEl.textContent = card.hanzi;
+            pinyinEl.textContent = card.pinyin;
+            portugueseEl.textContent = card.pt;
+            sentenceEl.textContent = card.sentence;
+            
+            counterEl.textContent = `${index + 1} / ${flashcards.length}`;
+            
+            // Reseta o estado para escondido ao trocar de carta
+            isRevealed = false;
+            detailsEl.style.display = 'none';
+            hintEl.style.display = 'block';
+        }
+
+        function toggleCard() {
+            isRevealed = !isRevealed;
+            if (isRevealed) {
+                detailsEl.style.display = 'flex';
+                hintEl.style.display = 'none';
+            } else {
+                detailsEl.style.display = 'none';
+                hintEl.style.display = 'block';
+            }
+        }
+
+        function nextCard() {
+            if (currentIndex < flashcards.length - 1) {
+                currentIndex++;
+                loadCard(currentIndex);
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                loadCard(currentIndex);
+            }
+        }
+
+        // Carrega a primeira carta ao iniciar
+        loadCard(currentIndex);
+    </script>
+</body>
+</html>
