@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcards de Chinês</title>
+    <title>Flashcards de Chinês - Avançado</title>
     <style>
         :root {
             --bg-color: #f4f4f9;
@@ -11,6 +11,18 @@
             --text-main: #333333;
             --text-secondary: #666666;
             --primary-color: #e74c3c;
+            --btn-hover: #c0392b;
+            --hard-color: #e74c3c;
+            --good-color: #f1c40f;
+            --easy-color: #2ecc71;
+        }
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --text-secondary: #cccccc;
+            --primary-color: #bb86fc;
+            --btn-hover: #9965f4;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -21,21 +33,42 @@
             align-items: center;
             padding: 20px;
             margin: 0;
+            transition: background-color 0.3s;
         }
         header {
             width: 100%;
             max-width: 400px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .stats {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
             margin-bottom: 20px;
-            font-size: 1.1rem;
+            background: var(--card-bg);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--text-main);
+            color: var(--text-main);
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
             font-weight: bold;
         }
         .card {
             background-color: var(--card-bg);
             width: 100%;
             max-width: 400px;
-            min-height: 250px;
+            min-height: 280px;
             border-radius: 15px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             display: flex;
@@ -45,20 +78,26 @@
             cursor: pointer;
             padding: 30px;
             text-align: center;
-            transition: transform 0.2s;
-        }
-        .card:active {
-            transform: scale(0.98);
+            position: relative;
         }
         .hanzi {
-            font-size: 3.5rem;
+            font-size: 4rem;
             font-weight: bold;
             margin-bottom: 10px;
         }
+        .speaker {
+            font-size: 1.5rem;
+            cursor: pointer;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            opacity: 0.7;
+        }
         .details {
-            display: none; /* Escondido por padrão */
+            display: none;
             flex-direction: column;
             align-items: center;
+            width: 100%;
         }
         .pinyin {
             font-size: 1.5rem;
@@ -72,127 +111,155 @@
         .sentence {
             font-size: 1rem;
             color: var(--text-secondary);
-            background: #f9f9f9;
+            background: rgba(128, 128, 128, 0.1);
             padding: 10px;
             border-radius: 8px;
-            border-left: 4px solid var(--primary-color);
-        }
-        .hint {
-            font-size: 0.9rem;
-            color: #999;
-            margin-top: 20px;
+            width: 90%;
         }
         .controls {
-            margin-top: 30px;
-            display: flex;
-            gap: 15px;
+            margin-top: 20px;
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            gap: 10px;
+            justify-content: center;
         }
-        button {
-            background-color: var(--primary-color);
-            color: white;
+        .btn-rating {
+            flex: 1;
+            padding: 12px;
             border: none;
-            padding: 12px 24px;
             border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
+            color: #121212;
             font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
         }
-        button:hover {
-            background-color: #c0392b;
+        .btn-hard { background-color: var(--hard-color); color: white; }
+        .btn-good { background-color: var(--good-color); }
+        .btn-easy { background-color: var(--easy-color); color: white; }
+        .hint {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <span>Vocabulário PKU</span>
-        <span id="counter">1 / 10</span>
+        <h2>Hanyu 100</h2>
+        <button class="theme-toggle" onclick="toggleTheme()">🌓 Tema</button>
     </header>
 
-    <div class="card" onclick="toggleCard()">
+    <div class="stats">
+        <span id="queue-count">Fila: 0</span>
+        <span id="learning-count" style="color: var(--good-color)">Aprender: 0</span>
+        <span id="mastered-count" style="color: var(--easy-color)">Dominadas: 0</span>
+    </div>
+
+    <div class="card" id="flashcard" onclick="revealCard()">
+        <div class="speaker" onclick="event.stopPropagation(); playAudio()">🔊</div>
         <div class="hanzi" id="hanzi">北京大学</div>
         
         <div class="details" id="details">
             <div class="pinyin" id="pinyin">Běijīng Dàxué</div>
             <div class="portuguese" id="portuguese">Universidade de Pequim</div>
-            <div class="sentence" id="sentence">我在北京大学学习。(Eu estudo na Universidade de Pequim.)</div>
+            <div class="sentence" id="sentence">他在北京大学学习。</div>
         </div>
 
-        <div class="hint" id="hint">Toque no cartão para revelar</div>
+        <div class="hint" id="hint">Toque para revelar</div>
     </div>
 
-    <div class="controls">
-        <button onclick="prevCard()">Anterior</button>
-        <button onclick="nextCard()">Próxima</button>
+    <div class="controls" id="controls">
+        <button class="btn-rating btn-hard" onclick="rateCard('hard')">Difícil</button>
+        <button class="btn-rating btn-good" onclick="rateCard('good')">Bom</button>
+        <button class="btn-rating btn-easy" onclick="rateCard('easy')">Fácil</button>
     </div>
 
     <script>
-        // Adicionei os primeiros itens da sua lista com frases de exemplo.
-        // Você pode copiar e colar o restante seguindo esta mesma estrutura.
         const flashcards = [
-            { hanzi: "北京大学", pinyin: "Běijīng Dàxué", pt: "Universidade de Pequim (PKU)", sentence: "他在北京大学学习。(Ele estuda na Universidade de Pequim.)" },
-            { hanzi: "留学生", pinyin: "liúxuéshēng", pt: "Estudante internacional", sentence: "我们都是留学生。(Nós somos estudantes internacionais.)" },
-            { hanzi: "宿舍", pinyin: "sùshè", pt: "Dormitório / Alojamento", sentence: "我的宿舍很大。(Meu dormitório é grande.)" },
-            { hanzi: "食堂", pinyin: "shítáng", pt: "Refeitório universitário", sentence: "我们去食堂吃饭吧。(Vamos comer no refeitório.)" },
-            { hanzi: "校园卡", pinyin: "xiàoyuán kǎ", pt: "Cartão do campus", sentence: "我没有校园卡。(Eu não tenho o cartão do campus.)" },
-            { hanzi: "教室", pinyin: "jiàoshì", pt: "Sala de aula", sentence: "教室里没有人。(Não há ninguém na sala de aula.)" },
-            { hanzi: "老师", pinyin: "lǎoshī", pt: "Professor", sentence: "王老师是我的汉语老师。(O professor Wang é meu professor de chinês.)" },
-            { hanzi: "宫保鸡丁", pinyin: "gōngbǎo jīdīng", pt: "Frango Xadrez", sentence: "我最喜欢吃宫保鸡丁。(Eu adoro comer frango xadrez.)" }
+            { hanzi: "北京大学", pinyin: "Běijīng Dàxué", pt: "Universidade de Pequim", sentence: "他在北京大学学习。" },
+            { hanzi: "留学生", pinyin: "liúxuéshēng", pt: "Estudante internacional", sentence: "我们都是留学生。" },
+            { hanzi: "宿舍", pinyin: "sùshè", pt: "Dormitório", sentence: "我的宿舍很大。" },
+            { hanzi: "食堂", pinyin: "shítáng", pt: "Refeitório", sentence: "我们去食堂吃饭吧。" },
+            { hanzi: "教室", pinyin: "jiàoshì", pt: "Sala de aula", sentence: "教室里没有人。" }
         ];
 
-        let currentIndex = 0;
+        let queue = [...flashcards];
+        let learning = [];
+        let mastered = [];
+        let currentCard = null;
         let isRevealed = false;
 
-        const hanziEl = document.getElementById('hanzi');
-        const detailsEl = document.getElementById('details');
-        const pinyinEl = document.getElementById('pinyin');
-        const portugueseEl = document.getElementById('portuguese');
-        const sentenceEl = document.getElementById('sentence');
-        const hintEl = document.getElementById('hint');
-        const counterEl = document.getElementById('counter');
+        function updateStats() {
+            document.getElementById('queue-count').textContent = `Fila: ${queue.length}`;
+            document.getElementById('learning-count').textContent = `Aprender: ${learning.length}`;
+            document.getElementById('mastered-count').textContent = `Dominadas: ${mastered.length}`;
+        }
 
-        function loadCard(index) {
-            const card = flashcards[index];
-            hanziEl.textContent = card.hanzi;
-            pinyinEl.textContent = card.pinyin;
-            portugueseEl.textContent = card.pt;
-            sentenceEl.textContent = card.sentence;
+        function loadNextCard() {
+            if (queue.length === 0 && learning.length === 0) {
+                document.getElementById('hanzi').textContent = "🎉";
+                document.getElementById('pinyin').textContent = "Tudo concluído!";
+                document.getElementById('portuguese').textContent = "Você revisou todas as palavras.";
+                document.getElementById('sentence').textContent = "";
+                document.getElementById('details').style.display = 'flex';
+                document.getElementById('controls').style.display = 'none';
+                document.getElementById('hint').style.display = 'none';
+                return;
+            }
+
+            // Pega da fila principal, se acabar pega das que estão aprendendo
+            currentCard = queue.length > 0 ? queue.shift() : learning.shift();
             
-            counterEl.textContent = `${index + 1} / ${flashcards.length}`;
-            
-            // Reseta o estado para escondido ao trocar de carta
+            document.getElementById('hanzi').textContent = currentCard.hanzi;
+            document.getElementById('pinyin').textContent = currentCard.pinyin;
+            document.getElementById('portuguese').textContent = currentCard.pt;
+            document.getElementById('sentence').textContent = currentCard.sentence;
+
             isRevealed = false;
-            detailsEl.style.display = 'none';
-            hintEl.style.display = 'block';
+            document.getElementById('details').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('hint').style.display = 'block';
+            
+            updateStats();
         }
 
-        function toggleCard() {
-            isRevealed = !isRevealed;
-            if (isRevealed) {
-                detailsEl.style.display = 'flex';
-                hintEl.style.display = 'none';
-            } else {
-                detailsEl.style.display = 'none';
-                hintEl.style.display = 'block';
+        function revealCard() {
+            if (isRevealed || !currentCard) return;
+            isRevealed = true;
+            document.getElementById('details').style.display = 'flex';
+            document.getElementById('hint').style.display = 'none';
+            document.getElementById('controls').style.display = 'flex';
+            playAudio();
+        }
+
+        function rateCard(rating) {
+            if (rating === 'hard') {
+                learning.push(currentCard); // Volta pro fim da fila de aprendizado
+            } else if (rating === 'good') {
+                mastered.push(currentCard); // Conta como dominada, mas num app real voltaria amanhã
+            } else if (rating === 'easy') {
+                mastered.push(currentCard);
             }
+            loadNextCard();
         }
 
-        function nextCard() {
-            if (currentIndex < flashcards.length - 1) {
-                currentIndex++;
-                loadCard(currentIndex);
-            }
+        function playAudio() {
+            if (!currentCard) return;
+            const utterance = new SpeechSynthesisUtterance(currentCard.hanzi);
+            utterance.lang = 'zh-CN'; // Voz nativa em mandarim
+            utterance.rate = 0.8; // Velocidade ligeiramente mais lenta
+            window.speechSynthesis.speak(utterance);
         }
 
-        function prevCard() {
-            if (currentIndex > 0) {
-                currentIndex--;
-                loadCard(currentIndex);
-            }
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            html.setAttribute('data-theme', currentTheme === 'light' ? 'dark' : 'light');
         }
 
-        // Carrega a primeira carta ao iniciar
-        loadCard(currentIndex);
+        loadNextCard();
     </script>
 </body>
 </html>
