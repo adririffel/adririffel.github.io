@@ -178,11 +178,86 @@
 
     <script>
         const flashcards = [
-            { hanzi: "北京大学", pinyin: "Běijīng Dàxué", pt: "Universidade de Pequim", sentence: "他在北京大学学习。" },
-            { hanzi: "留学生", pinyin: "liúxuéshēng", pt: "Estudante internacional", sentence: "我们都是留学生。" },
-            { hanzi: "宿舍", pinyin: "sùshè", pt: "Dormitório", sentence: "我的宿舍很大。" },
-            { hanzi: "食堂", pinyin: "shítáng", pt: "Refeitório", sentence: "我们去食堂吃饭吧。" },
-            { hanzi: "教室", pinyin: "jiàoshì", pt: "Sala de aula", sentence: "教室里没有人。" }
+    // 1. Campus, Estudos & PKU
+    { hanzi: "北京大学 (北大)", pinyin: "Běijīng Dàxué (Běidà)", pt: "Universidade de Pequim (PKU)", sentence: "我在北京大学学习。" },
+    { hanzi: "留学生", pinyin: "liúxuéshēng", pt: "Estudante internacional", sentence: "我们都是留学生。" },
+    { hanzi: "宿舍", pinyin: "sùshè", pt: "Dormitório / Alojamento", sentence: "我的宿舍很大。" },
+    { hanzi: "食堂", pinyin: "shítáng", pt: "Refeitório universitário", sentence: "我们去食堂吃饭。" },
+    { hanzi: "校园卡", pinyin: "xiàoyuán kǎ", pt: "Cartão do campus", sentence: "请刷校园卡。" },
+    { hanzi: "教室", pinyin: "jiàoshì", pt: "Sala de aula", sentence: "教室里没有人。" },
+    { hanzi: "办公室", pinyin: "bàngōngshì", pt: "Escritório / Secretaria", sentence: "老师在办公室。" },
+    { hanzi: "楼", pinyin: "lóu", pt: "Prédio / Edifício / Andar", sentence: "我在三楼。" },
+    { hanzi: "上课 / 下课", pinyin: "shàngkè / xiàkè", pt: "Entrar na aula / Sair da aula", sentence: "我们八点上课。" },
+    { hanzi: "考试 / 作业", pinyin: "kǎoshì / zuòyè", pt: "Prova / Dever de casa", sentence: "明天有考试。" },
+    { hanzi: "未名湖 / 博雅塔", pinyin: "Wèimíng Hú / Bóyǎ Tǎ", pt: "Lago Weiming / Torre Boya", sentence: "未名湖很漂亮。" },
+    { hanzi: "学校 / 图书馆", pinyin: "xuéxiào / túshūguǎn", pt: "Escola / Biblioteca", sentence: "我去图书馆看书。" },
+    { hanzi: "老师 / 学生 / 同学", pinyin: "lǎoshī / xuésheng / tóngxué", pt: "Professor / Estudante / Colega", sentence: "同学们好。" },
+    { hanzi: "学习 / 读 / 写", pinyin: "xuéxí / dú / xiě", pt: "Estudar / Ler / Escrever", sentence: "我学习汉语。" },
+    { hanzi: "汉语 / 汉字", pinyin: "hànyǔ / hànzì", pt: "Língua chinesa / Caracteres", sentence: "汉字很难。" },
+    { hanzi: "课 / 发音 / 练习", pinyin: "kè / fāyīn / liànxí", pt: "Aula / Pronúncia / Exercício", sentence: "请做练习。" },
+    { hanzi: "书 / 本子 / 本", pinyin: "shū / běnzi / běn", pt: "Livro / Caderno / Classificador", sentence: "这是一本书。" },
+    { hanzi: "词典 / 笔 / 字", pinyin: "cídiǎn / bǐ / zì", pt: "Dicionário / Caneta / Caractere", sentence: "借我一支笔。" },
+
+    // 2. Gastronomia, Restaurante & Compras
+    { hanzi: "菜单 / 买单 / 结账", pinyin: "càidān / mǎidān / jiézhàng", pt: "Cardápio / Pedir a conta", sentence: "服务员，买单！" },
+    { hanzi: "打包 / 服务员", pinyin: "dǎbāo / fúwùyuán", pt: "Para levar / Garçom", sentence: "这个菜打包。" },
+    { hanzi: "微辣 / 不辣", pinyin: "wēilà / bùlà", pt: "Pouco apimentado / Sem pimenta", sentence: "我要微辣的。" },
+    { hanzi: "宫保鸡丁 / 麻婆豆腐", pinyin: "gōngbǎo jīdīng / mápó dòufu", pt: "Frango Xadrez / Mapo Tofu", sentence: "宫保鸡丁很好吃。" },
+    { hanzi: "猪肉 / 牛肉 / 烤鸭", pinyin: "zhūròu / niúròu / kǎoyā", pt: "Porco / Bovina / Pato assado", sentence: "北京烤鸭很有名。" },
+    { hanzi: "筷子", pinyin: "kuàizi", pt: "Hashi (palitos)", sentence: "我会用筷子。" },
+    { hanzi: "饭店 / 餐厅 / 超市", pinyin: "fàndiàn / cāntīng / chāoshì", pt: "Restaurante / Supermercado", sentence: "我去超市买东西。" },
+    { hanzi: "吃 / 吃饭 / 喝", pinyin: "chī / chīfàn / hē", pt: "Comer / Refeição / Beber", sentence: "你喝什么？" },
+    { hanzi: "水 / 茶 / 咖啡", pinyin: "shuǐ / chá / kāfēi", pt: "Água / Chá / Café", sentence: "我想喝咖啡。" },
+    { hanzi: "苹果 / 西瓜 / 香蕉", pinyin: "píngguǒ / xīguā / xiāngjiāo", pt: "Maçã / Melancia / Banana", sentence: "我要买苹果。" },
+    { hanzi: "钱 / 美元 / 块", pinyin: "qián / měiyuán / kuài", pt: "Dinheiro / Dólar / Kuai", sentence: "这个多少钱？" },
+
+    // 3. Conectivos & Essenciais HSK
+    { hanzi: "微信 / 支付宝 / 扫码", pinyin: "Wēixìn / Zhīfùbǎo / sǎomǎ", pt: "WeChat / Alipay / Escanear QR", sentence: "我扫你。" },
+    { hanzi: "方便 / 需要 / 帮助", pinyin: "fāngbiàn / xūyào / bāngzhù", pt: "Conveniente / Precisar / Ajudar", sentence: "需要帮助吗？" },
+    { hanzi: "但是 / 所以 / 因为", pinyin: "dànshì / suǒyǐ / yīnwèi", pt: "Mas / Portanto / Porque", sentence: "因为下雨，所以我没去。" },
+    { hanzi: "是 / 有 / 没有", pinyin: "shì / yǒu / méiyǒu", pt: "Ser / Ter / Não ter", sentence: "我没有钱。" },
+    { hanzi: "去 / 来 / 回 / 进", pinyin: "qù / lái / huí / jìn", pt: "Ir / Vir / Voltar / Entrar", sentence: "请进。" },
+    { hanzi: "想 / 喜欢 / 觉得", pinyin: "xiǎng / xǐhuān / juéde", pt: "Querer / Gostar / Achar", sentence: "我觉得很好。" },
+    { hanzi: "要 / 会 / 能 / 可以", pinyin: "yào / huì / néng / kěyǐ", pt: "Querer / Saber / Poder", sentence: "我会说汉语。" },
+    { hanzi: "认识 / 知道", pinyin: "rènshi / zhīdào", pt: "Conhecer / Saber", sentence: "很高兴认识你。" },
+
+    // 4. Pessoas & Família
+    { hanzi: "我 / 你 / 您", pinyin: "wǒ / nǐ / nín", pt: "Eu / Você / O senhor(a)", sentence: "您好。" },
+    { hanzi: "他 / 她 / 它", pinyin: "tā / tā / tā", pt: "Ele / Ela / Neutro", sentence: "他是谁？" },
+    { hanzi: "我们 / 你们 / 他们", pinyin: "wǒmen / nǐmen / tāmen", pt: "Nós / Vocês / Eles", sentence: "我们是朋友。" },
+    { hanzi: "爸爸 / 妈妈", pinyin: "bàba / māma", pt: "Pai / Mãe", sentence: "我爱我的妈妈。" },
+    { hanzi: "哥哥 / 姐姐 / 弟弟 / 妹妹", pinyin: "gēge / jiějie / dìdi / mèimei", pt: "Irmãos (velhos e novos)", sentence: "我有一个妹妹。" },
+
+    // 5. Tempo & Clima
+    { hanzi: "年 / 月 / 日 / 星期", pinyin: "nián / yuè / rì / xīngqī", pt: "Ano / Mês / Dia / Semana", sentence: "今天是星期一。" },
+    { hanzi: "点 / 分 / 刻 / 秒", pinyin: "diǎn / fēn / kè / miǎo", pt: "Hora / Minuto / 15 min / Segundo", sentence: "现在几点？" },
+    { hanzi: "早上 / 中午 / 晚上", pinyin: "zǎoshang / zhōngwǔ / wǎnshang", pt: "Manhã / Meio-dia / Noite", sentence: "晚上好。" },
+    { hanzi: "今天 / 昨天 / 明天", pinyin: "jīntiān / zuótiān / míngtiān", pt: "Hoje / Ontem / Amanhã", sentence: "明天见。" },
+    { hanzi: "天气 / 冷 / 热 / 雨", pinyin: "tiānqì / lěng / rè / yǔ", pt: "Clima / Frio / Quente / Chuva", sentence: "今天很热。" },
+
+    // 6. Lugares & Direções
+    { hanzi: "中国 / 北京 / 上海", pinyin: "Zhōngguó / Běijīng / Shànghǎi", pt: "China / Pequim / Xangai", sentence: "我在中国。" },
+    { hanzi: "邮局 / 银行 / 书店", pinyin: "yóujú / yínháng / shūdiàn", pt: "Correios / Banco / Livraria", sentence: "银行在哪里？" },
+    { hanzi: "哪里 / 这里 / 那里", pinyin: "nǎli / zhèlǐ / nàli", pt: "Onde / Aqui / Lá", sentence: "你在这里吗？" },
+    { hanzi: "上面 / 下面 / 前面 / 后面", pinyin: "shàngmiàn / xiàmiàn / qiánmiàn / hòumiàn", pt: "Cima / Baixo / Frente / Atrás", sentence: "前面有人。" },
+
+    // 7. Objetos & Transporte
+    { hanzi: "电脑 / 电视 / 手机", pinyin: "diànnǎo / diànshì / shǒujī", pt: "Computador / TV / Celular", sentence: "这是我的手机。" },
+    { hanzi: "桌子 / 椅子", pinyin: "zhuōzi / yǐzi", pt: "Mesa / Cadeira", sentence: "桌子上有书。" },
+    { hanzi: "车 / 地铁 / 出租车 / 飞机", pinyin: "chē / dìtiě / chūzūchē / fēijī", pt: "Carro / Metrô / Táxi / Avião", sentence: "我坐地铁去。" },
+
+    // 8. Animais & Classificadores
+    { hanzi: "狗 / 猫", pinyin: "gǒu / māo", pt: "Cachorro / Gato", sentence: "我有一只猫。" },
+    { hanzi: "个 / 只 / 本 / 块 / 杯", pinyin: "gè / zhī / běn / kuài / bēi", pt: "Classificadores", sentence: "我要一杯水。" },
+
+    // 9. Adjetivos & Expressões
+    { hanzi: "大 / 小 / 多 / 少", pinyin: "dà / xiǎo / duō / shǎo", pt: "Grande / Pequeno / Muito / Pouco", sentence: "人很多。" },
+    { hanzi: "好 / 坏 / 漂亮 / 酷", pinyin: "hǎo / huài / piàoliang / kù", pt: "Bom / Ruim / Bonito / Legal", sentence: "你很漂亮。" },
+    { hanzi: "高兴 / 饿 / 渴", pinyin: "gāoxìng / è / kě", pt: "Feliz / Com fome / Com sede", sentence: "我饿了。" },
+    { hanzi: "贵 / 便宜 / 高", pinyin: "guì / piányi / gāo", pt: "Caro / Barato / Alto", sentence: "太贵了！" },
+    { hanzi: "你好 / 再见", pinyin: "nǐhǎo / zàijiàn", pt: "Cumprimentos / Despedidas", sentence: "你好！" },
+    { hanzi: "谢谢 / 不客气 / 对不起", pinyin: "xièxie / bú kèqi / duìbuqǐ", pt: "Cortesia diária", sentence: "谢谢你。" },
+    { hanzi: "怎么 / 多少 / 谁 / 什么", pinyin: "zěnme / duōshao / shéi / shénme", pt: "Pronomes interrogativos", sentence: "这是什么？" }
         ];
 
         let queue = [...flashcards];
