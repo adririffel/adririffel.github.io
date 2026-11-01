@@ -7,7 +7,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #121212; color: #e5e5e5; }
+        body { background-color: #121212; color: #e5e5e5; overflow-x: hidden; }
         .perspective { perspective: 1000px; }
         .transform-style-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; }
@@ -15,7 +15,7 @@
         .transition-transform { transition: transform 0.6s; }
     </style>
 </head>
-<body class="min-h-screen p-6">
+<body class="min-h-screen p-4 md:p-6">
     <div id="app" class="max-w-3xl mx-auto">
         <nav class="flex gap-4 border-b border-gray-700 pb-4 mb-6">
             <button @click="currentTab = 'estudo'" :class="currentTab === 'estudo' ? 'text-blue-400 font-bold' : 'text-gray-400'">Estudar</button>
@@ -27,51 +27,72 @@
             <div class="mb-4">
                 <label class="block text-sm mb-2 text-gray-400">Selecione o Documento (Decks):</label>
                 <select v-model="activeDeck" class="bg-gray-800 border border-gray-700 rounded p-2 w-full">
-                    <option v-for="(deck, name) in decks" :key="name" :value="name">{{ name }}</option>
+                    <option value="Todas as Palavras">📚 Todas as Palavras (Sem Duplicatas)</option>
+                    <option v-for="(_, name) in decks" :key="name" :value="name">{{ name }}</option>
                 </select>
             </div>
 
-            <div v-if="currentCard" class="flex flex-col items-center mt-10">
-                <div class="perspective w-72 h-96 cursor-pointer" @click="flipped = true">
+            <div v-if="currentCard" class="flex flex-col items-center mt-6">
+                
+                <!-- Barra de Progresso da Sessão -->
+                <div class="w-full max-w-sm mb-4">
+                    <div class="flex justify-between text-xs text-gray-400 mb-1">
+                        <span>Progresso da Sessão</span>
+                        <span>{{ seenInSession.size }} / {{ activeCards.length }} ({{ sessionProgress }}%)</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" :style="{ width: sessionProgress + '%' }"></div>
+                    </div>
+                </div>
+
+                <div class="perspective w-[90vw] max-w-sm aspect-[3/4] cursor-pointer" @click="flipped = true">
                     <div class="relative w-full h-full transition-transform transform-style-3d duration-500" :class="{ 'rotate-y-180': flipped }">
                         <!-- Frente do Cartão -->
-                        <div class="absolute w-full h-full backface-hidden bg-gray-800 rounded-xl flex items-center justify-center border border-gray-700 shadow-lg">
-                            <span class="text-7xl font-bold">{{ currentCard.hanzi }}</span>
+                        <div class="absolute w-full h-full backface-hidden bg-gray-800 rounded-xl flex items-center justify-center border border-gray-700 shadow-lg p-4">
+                            <span class="text-6xl md:text-8xl font-bold break-words text-center">{{ currentCard.hanzi }}</span>
                         </div>
                         <!-- Verso do Cartão -->
-                        <div class="absolute w-full h-full backface-hidden rotate-y-180 bg-gray-700 rounded-xl flex flex-col items-center justify-center border border-gray-600 shadow-lg p-4 text-center">
-                            <span class="text-6xl font-bold mb-4">{{ currentCard.hanzi }}</span>
-                            <span class="text-2xl text-blue-300 mb-2">{{ currentCard.pinyin }}</span>
-                            <span class="text-lg text-gray-200 mb-6">{{ currentCard.meaning }}</span>
-                            <button @click.stop="playSound(currentCard.hanzi)" class="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full mb-4">
+                        <div class="absolute w-full h-full backface-hidden rotate-y-180 bg-gray-700 rounded-xl flex flex-col items-center justify-center border border-gray-600 shadow-lg p-6 text-center relative">
+                            <!-- Botão Excluir -->
+                            <button @click.stop="deleteWord(currentCard.hanzi)" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-xl" title="Excluir palavra para sempre">
+                                🗑️
+                            </button>
+                            <span class="text-5xl md:text-7xl font-bold mb-6 break-words">{{ currentCard.hanzi }}</span>
+                            <span class="text-2xl md:text-3xl text-blue-300 mb-4">{{ currentCard.pinyin }}</span>
+                            <span class="text-lg md:text-xl text-gray-200 mb-8">{{ currentCard.meaning }}</span>
+                            <button @click.stop="playSound(currentCard.hanzi)" class="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full">
                                 🔊 Ouvir
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <div v-if="flipped" class="flex gap-2 mt-8 w-full justify-center">
-                    <button @click="rateCard('Muito Difícil')" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded text-sm">Muito Difícil</button>
-                    <button @click="rateCard('Difícil')" class="bg-orange-600 hover:bg-orange-500 px-4 py-2 rounded text-sm">Difícil</button>
-                    <button @click="rateCard('Médio')" class="bg-yellow-600 hover:bg-yellow-500 px-4 py-2 rounded text-sm">Médio</button>
-                    <button @click="rateCard('Fácil')" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded text-sm">Fácil</button>
+                <!-- Botões de Categoria -->
+                <div v-if="flipped" class="flex flex-wrap gap-2 mt-8 w-full max-w-sm justify-center">
+                    <button @click="rateCard('Muito Difícil')" class="bg-red-600 hover:bg-red-500 px-3 py-2 rounded text-sm flex-1 whitespace-nowrap">Muito Difícil</button>
+                    <button @click="rateCard('Difícil')" class="bg-orange-600 hover:bg-orange-500 px-3 py-2 rounded text-sm flex-1 whitespace-nowrap">Difícil</button>
+                    <button @click="rateCard('Médio')" class="bg-yellow-600 hover:bg-yellow-500 px-3 py-2 rounded text-sm flex-1 whitespace-nowrap">Médio</button>
+                    <button @click="rateCard('Fácil')" class="bg-green-600 hover:bg-green-500 px-3 py-2 rounded text-sm flex-1 whitespace-nowrap">Fácil</button>
                 </div>
             </div>
             <div v-else class="text-center mt-20 text-gray-400">
-                Nenhum cartão disponível neste deck.
+                Nenhuma carta disponível.
             </div>
         </div>
 
         <!-- Aba de Progresso -->
         <div v-if="currentTab === 'progresso'">
-            <h2 class="text-2xl font-bold mb-4">Seu Progresso</h2>
+            <h2 class="text-2xl font-bold mb-4">Seu Progresso Global</h2>
             <div v-for="(deckCards, deckName) in decks" :key="deckName" class="mb-6 bg-gray-800 p-4 rounded-lg">
-                <h3 class="text-xl font-semibold mb-3 border-b border-gray-700 pb-2">{{ deckName }}</h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                    <div class="bg-gray-700 p-3 rounded"><p class="text-sm text-gray-400">Muito Difícil</p><p class="text-xl font-bold text-red-400">{{ countCategory(deckCards, 'Muito Difícil') }}</p></div>
-                    <div class="bg-gray-700 p-3 rounded"><p class="text-sm text-gray-400">Difícil</p><p class="text-xl font-bold text-orange-400">{{ countCategory(deckCards, 'Difícil') }}</p></div>
-                    <div class="bg-gray-700 p-3 rounded"><p class="text-sm text-gray-400">Médio</p><p class="text-xl font-bold text-yellow-400">{{ countCategory(deckCards, 'Médio') }}</p></div>
-                    <div class="bg-gray-700 p-3 rounded"><p class="text-sm text-gray-400">Fácil</p><p class="text-xl font-bold text-green-400">{{ countCategory(deckCards, 'Fácil') }}</p></div>
+                <h3 class="text-lg md:text-xl font-semibold mb-3 border-b border-gray-700 pb-2 flex justify-between">
+                    <span>{{ deckName }}</span>
+                    <span class="text-sm text-gray-400 mt-1">{{ deckCards.length }} palavras</span>
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                    <div class="bg-gray-700 p-2 md:p-3 rounded"><p class="text-xs md:text-sm text-gray-400">Muito Difícil</p><p class="text-lg md:text-xl font-bold text-red-400">{{ countCategory(deckCards, 'Muito Difícil') }}</p></div>
+                    <div class="bg-gray-700 p-2 md:p-3 rounded"><p class="text-xs md:text-sm text-gray-400">Difícil</p><p class="text-lg md:text-xl font-bold text-orange-400">{{ countCategory(deckCards, 'Difícil') }}</p></div>
+                    <div class="bg-gray-700 p-2 md:p-3 rounded"><p class="text-xs md:text-sm text-gray-400">Médio</p><p class="text-lg md:text-xl font-bold text-yellow-400">{{ countCategory(deckCards, 'Médio') }}</p></div>
+                    <div class="bg-gray-700 p-2 md:p-3 rounded"><p class="text-xs md:text-sm text-gray-400">Fácil</p><p class="text-lg md:text-xl font-bold text-green-400">{{ countCategory(deckCards, 'Fácil') }}</p></div>
                 </div>
             </div>
         </div>
@@ -83,10 +104,15 @@
         createApp({
             setup() {
                 const currentTab = ref('estudo');
-                const activeDeck = ref('Chinês Particular');
+                const activeDeck = ref('Todas as Palavras');
                 const flipped = ref(false);
                 const currentCard = ref(null);
+                
+                // Variáveis para sessão e prevenção de repetição imediata
+                const seenInSession = ref(new Set());
+                let lastCardHanzi = null;
 
+                // [CÓDIGO OCULTO NO COMENTÁRIO PARA BREVIDADE - OS DECKS ANTERIORES FORAM MANTIDOS INTACTOS AQUI, SÓ ADICIONEI O EXTRA]
                 const defaultDecks = {
                     'Chinês Particular': [
                         { id: 1, hanzi: '安迪', pinyin: 'Āndí', meaning: 'Andy (nome próprio)', category: 'Médio' },
@@ -545,41 +571,91 @@
                         { id: 448, hanzi: '在', pinyin: 'zài', meaning: 'Estar em', category: 'Médio' },
                         { id: 449, hanzi: '怎么', pinyin: 'zěnme', meaning: 'Como', category: 'Médio' },
                         { id: 450, hanzi: '怎么样', pinyin: 'zěnmeyàng', meaning: 'O que acha?', category: 'Médio' },
-                        { id: 451, hanzi: '这', pinyin: 'zhè', meaning: 'Este / Esta', category: 'Médio' },
-                        { id: 452, hanzi: '中国', pinyin: 'zhōngguó', meaning: 'China', category: 'Médio' },
-                        { id: 453, hanzi: '中午', pinyin: 'zhōngwǔ', meaning: 'Meio-dia', category: 'Médio' },
-                        { id: 454, hanzi: '住', pinyin: 'zhù', meaning: 'Morar', category: 'Médio' },
-                        { id: 455, hanzi: '桌子', pinyin: 'zhuōzi', meaning: 'Mesa', category: 'Médio' },
-                        { id: 456, hanzi: '字', pinyin: 'zì', meaning: 'Caractere', category: 'Médio' },
-                        { id: 457, hanzi: '昨天', pinyin: 'zuótiān', meaning: 'Ontem', category: 'Médio' },
-                        { id: 458, hanzi: '做', pinyin: 'zuò', meaning: 'Fazer', category: 'Médio' },
-                        { id: 459, hanzi: '坐', pinyin: 'zuò', meaning: 'Sentar / Viajar de', category: 'Médio' }
+                        { id: 451, 'hanzi': '这', pinyin: 'zhè', meaning: 'Este / Esta', category: 'Médio' },
+                        { id: 452, 'hanzi': '中国', pinyin: 'zhōngguó', meaning: 'China', category: 'Médio' },
+                        { id: 453, 'hanzi': '中午', pinyin: 'zhōngwǔ', meaning: 'Meio-dia', category: 'Médio' },
+                        { id: 454, 'hanzi': '住', pinyin: 'zhù', meaning: 'Morar', category: 'Médio' },
+                        { id: 455, 'hanzi': '桌子', pinyin: 'zhuōzi', meaning: 'Mesa', category: 'Médio' },
+                        { id: 456, 'hanzi': '字', pinyin: 'zì', meaning: 'Caractere', category: 'Médio' },
+                        { id: 457, 'hanzi': '昨天', pinyin: 'zuótiān', meaning: 'Ontem', category: 'Médio' },
+                        { id: 458, 'hanzi': '做', pinyin: 'zuò', meaning: 'Fazer', category: 'Médio' },
+                        { id: 459, 'hanzi': '坐', pinyin: 'zuò', meaning: 'Sentar / Viajar de', category: 'Médio' }
+                    ],
+                    'Palavras Extras': [
+                        { id: 460, hanzi: '小心', pinyin: 'xiǎoxīn', meaning: 'Cuidado', category: 'Médio' },
+                        { id: 461, hanzi: '慢点儿', pinyin: 'màn diǎnr', meaning: 'Devagar', category: 'Médio' },
+                        { id: 462, hanzi: '让一下', pinyin: 'ràng yíxià', meaning: 'Com licença / Dá uma passadinha', category: 'Médio' },
+                        { id: 463, hanzi: '打包', pinyin: 'dǎbāo', meaning: 'Para levar (marmita)', category: 'Médio' },
+                        { id: 464, hanzi: '堂食', pinyin: 'tángshí', meaning: 'Comer no local', category: 'Médio' },
+                        { id: 465, hanzi: '不辣', pinyin: 'bú là', meaning: 'Sem pimenta', category: 'Médio' },
+                        { id: 466, hanzi: '筷子', pinyin: 'kuàizi', meaning: 'Hashi / Palitinhos', category: 'Médio' },
+                        { id: 467, hanzi: '扫码', pinyin: 'sǎo mǎ', meaning: 'Escanear código QR (pagar)', category: 'Médio' },
+                        { id: 468, hanzi: '校园卡', pinyin: 'xiàoyuánkǎ', meaning: 'Cartão do estudante', category: 'Médio' },
+                        { id: 469, hanzi: '充值', pinyin: 'chōngzhí', meaning: 'Recarregar (cartão/saldo)', category: 'Médio' },
+                        { id: 470, hanzi: '宿舍', pinyin: 'sùshè', meaning: 'Dormitório', category: 'Médio' },
+                        { id: 471, hanzi: '食堂', pinyin: 'shítáng', meaning: 'Refeitório', category: 'Médio' },
+                        { id: 472, hanzi: '不用了', pinyin: 'bú yòng le', meaning: 'Não precisa / Não, obrigado', category: 'Médio' },
+                        { id: 473, hanzi: '不好意思', pinyin: 'bù hǎoyìsi', meaning: 'Licença / Desculpe', category: 'Médio' },
+                        { id: 474, hanzi: '收到', pinyin: 'shōudào', meaning: 'Ciente / Recebido', category: 'Médio' }
                     ]
                 };
 
-                const decks = ref(JSON.parse(localStorage.getItem('chineseDecks')) || defaultDecks);
-
-                // Força a atualização do banco de dados local se o número de categorias originais tiver mudado
-                // (Para evitar que você precise limpar o cache manualmente nesta primeira atualização)
-                if (Object.keys(decks.value).length < 4) {
-                    decks.value = defaultDecks;
-                    localStorage.setItem('chineseDecks', JSON.stringify(defaultDecks));
+                // Merge inteligente para não perder seu progresso no localStorage
+                const storedDecks = JSON.parse(localStorage.getItem('chineseDecks')) || {};
+                const mergedDecks = { ...defaultDecks };
+                
+                for (const deck in mergedDecks) {
+                    if (storedDecks[deck]) {
+                        mergedDecks[deck] = mergedDecks[deck].map(defaultCard => {
+                            const storedCard = storedDecks[deck].find(c => c.hanzi === defaultCard.hanzi);
+                            return storedCard ? storedCard : defaultCard;
+                        });
+                    }
                 }
 
-                // Salva automaticamente no localStorage sempre que houver mudanças nas categorias
+                const decks = ref(mergedDecks);
+
                 watch(decks, (newDecks) => {
                     localStorage.setItem('chineseDecks', JSON.stringify(newDecks));
                 }, { deep: true });
 
+                // Computed que gera a lista ativa, incluindo a lógica do deck "Todas as Palavras"
+                const activeCards = computed(() => {
+                    if (activeDeck.value === 'Todas as Palavras') {
+                        const all = [];
+                        const seen = new Set();
+                        for (const deckName in decks.value) {
+                            decks.value[deckName].forEach(card => {
+                                if (!seen.has(card.hanzi)) {
+                                    seen.add(card.hanzi);
+                                    all.push(card);
+                                }
+                            });
+                        }
+                        return all;
+                    }
+                    return decks.value[activeDeck.value] || [];
+                });
+
+                const sessionProgress = computed(() => {
+                    if (!activeCards.value.length) return 0;
+                    return Math.min(100, Math.round((seenInSession.value.size / activeCards.value.length) * 100));
+                });
+
+                watch(activeDeck, () => {
+                    seenInSession.value = new Set();
+                    lastCardHanzi = null;
+                    drawNextCard();
+                });
+
                 const drawNextCard = () => {
                     flipped.value = false;
-                    const cards = decks.value[activeDeck.value];
+                    const cards = activeCards.value;
                     if (!cards || cards.length === 0) {
                         currentCard.value = null;
                         return;
                     }
 
-                    // Sistema de pesos (Cartões difíceis têm mais chance de aparecer)
                     const weights = { 'Muito Difícil': 50, 'Difícil': 30, 'Médio': 15, 'Fácil': 5 };
                     let pool = [];
                     
@@ -588,14 +664,39 @@
                         for (let i = 0; i < weight; i++) pool.push(card);
                     });
 
-                    // Seleção aleatória baseada nos pesos (embaralhado dinamicamente)
-                    const randomIndex = Math.floor(Math.random() * pool.length);
-                    currentCard.value = pool[randomIndex];
+                    // Tenta garantir que não seja a mesma carta que a anterior, se possível
+                    let randomIndex;
+                    let nextCard;
+                    let attempts = 0;
+                    do {
+                        randomIndex = Math.floor(Math.random() * pool.length);
+                        nextCard = pool[randomIndex];
+                        attempts++;
+                    } while (cards.length > 1 && nextCard.hanzi === lastCardHanzi && attempts < 10);
+
+                    currentCard.value = nextCard;
+                    lastCardHanzi = nextCard.hanzi;
+                    seenInSession.value.add(nextCard.hanzi);
                 };
 
                 const rateCard = (category) => {
                     if (currentCard.value) {
-                        currentCard.value.category = category;
+                        // Encontra a carta real no banco de dados e atualiza (para funcionar com a aba "Todas")
+                        for (const deckName in decks.value) {
+                            const cardToUpdate = decks.value[deckName].find(c => c.hanzi === currentCard.value.hanzi);
+                            if (cardToUpdate) cardToUpdate.category = category;
+                        }
+                        drawNextCard();
+                    }
+                };
+
+                const deleteWord = (hanzi) => {
+                    if (confirm(`Tem certeza que deseja excluir "${hanzi}" para sempre?`)) {
+                        for (const deckName in decks.value) {
+                            decks.value[deckName] = decks.value[deckName].filter(c => c.hanzi !== hanzi);
+                        }
+                        // Limpa a palavra excluída da sessão se necessário
+                        seenInSession.value.delete(hanzi);
                         drawNextCard();
                     }
                 };
@@ -603,16 +704,15 @@
                 const playSound = (text) => {
                     const msg = new SpeechSynthesisUtterance();
                     msg.text = text;
-                    msg.lang = 'zh-CN'; // Define o sotaque e voz para Chinês Mandarim
+                    msg.lang = 'zh-CN'; 
                     window.speechSynthesis.speak(msg);
                 };
 
                 const countCategory = (deckCards, category) => deckCards.filter(c => c.category === category).length;
 
-                watch(activeDeck, drawNextCard);
                 onMounted(drawNextCard);
 
-                return { currentTab, activeDeck, decks, currentCard, flipped, rateCard, playSound, countCategory };
+                return { currentTab, activeDeck, decks, activeCards, currentCard, flipped, rateCard, deleteWord, playSound, countCategory, seenInSession, sessionProgress };
             }
         }).mount('#app');
     </script>
