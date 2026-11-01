@@ -1,340 +1,620 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcards de Chinês - Avançado</title>
+    <title>Estudo de Chinês</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --bg-color: #f4f4f9;
-            --card-bg: #ffffff;
-            --text-main: #333333;
-            --text-secondary: #666666;
-            --primary-color: #e74c3c;
-            --btn-hover: #c0392b;
-            --hard-color: #e74c3c;
-            --good-color: #f1c40f;
-            --easy-color: #2ecc71;
-        }
-        [data-theme="dark"] {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-main: #ffffff;
-            --text-secondary: #cccccc;
-            --primary-color: #bb86fc;
-            --btn-hover: #9965f4;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            margin: 0;
-            transition: background-color 0.3s;
-        }
-        header {
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .stats {
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-            background: var(--card-bg);
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .theme-toggle {
-            background: none;
-            border: 2px solid var(--text-main);
-            color: var(--text-main);
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .card {
-            background-color: var(--card-bg);
-            width: 100%;
-            max-width: 400px;
-            min-height: 280px;
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            padding: 30px;
-            text-align: center;
-            position: relative;
-        }
-        .hanzi {
-            font-size: 4rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .speaker {
-            font-size: 1.5rem;
-            cursor: pointer;
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            opacity: 0.7;
-        }
-        .details {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-        .pinyin {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-            margin-bottom: 10px;
-        }
-        .portuguese {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-        }
-        .sentence {
-            font-size: 1rem;
-            color: var(--text-secondary);
-            background: rgba(128, 128, 128, 0.1);
-            padding: 10px;
-            border-radius: 8px;
-            width: 90%;
-        }
-        .controls {
-            margin-top: 20px;
-            display: none;
-            width: 100%;
-            max-width: 400px;
-            gap: 10px;
-            justify-content: center;
-        }
-        .btn-rating {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            color: #121212;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        .btn-hard { background-color: var(--hard-color); color: white; }
-        .btn-good { background-color: var(--good-color); }
-        .btn-easy { background-color: var(--easy-color); color: white; }
-        .hint {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-top: 20px;
-        }
+        body { background-color: #121212; color: #e5e5e5; }
+        .perspective { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .transition-transform { transition: transform 0.6s; }
     </style>
 </head>
-<body>
+<body class="min-h-screen p-6">
+    <div id="app" class="max-w-3xl mx-auto">
+        <nav class="flex gap-4 border-b border-gray-700 pb-4 mb-6">
+            <button @click="currentTab = 'estudo'" :class="currentTab === 'estudo' ? 'text-blue-400 font-bold' : 'text-gray-400'">Estudar</button>
+            <button @click="currentTab = 'progresso'" :class="currentTab === 'progresso' ? 'text-blue-400 font-bold' : 'text-gray-400'">Progresso</button>
+        </nav>
 
-    <header>
-        <h2>Hanyu 100</h2>
-        <button class="theme-toggle" onclick="toggleTheme()">🌓 Tema</button>
-    </header>
+        <!-- Aba de Estudo -->
+        <div v-if="currentTab === 'estudo'">
+            <div class="mb-4">
+                <label class="block text-sm mb-2 text-gray-400">Selecione o Documento (Decks):</label>
+                <select v-model="activeDeck" class="bg-gray-800 border border-gray-700 rounded p-2 w-full">
+                    <option v-for="(deck, name) in decks" :key="name" :value="name">{{ name }}</option>
+                </select>
+            </div>
 
-    <div class="stats">
-        <span id="queue-count">Fila: 0</span>
-        <span id="learning-count" style="color: var(--good-color)">Aprender: 0</span>
-        <span id="mastered-count" style="color: var(--easy-color)">Dominadas: 0</span>
-    </div>
+            <div v-if="currentCard" class="flex flex-col items-center mt-10">
+                <div class="perspective w-72 h-96 cursor-pointer" @click="flipped = true">
+                    <div class="relative w-full h-full transition-transform transform-style-3d duration-500" :class="{ 'rotate-y-180': flipped }">
+                        <!-- Frente do Cartão -->
+                        <div class="absolute w-full h-full backface-hidden bg-gray-800 rounded-xl flex items-center justify-center border border-gray-700 shadow-lg">
+                            <span class="text-7xl font-bold">{{ currentCard.hanzi }}</span>
+                        </div>
+                        <!-- Verso do Cartão -->
+                        <div class="absolute w-full h-full backface-hidden rotate-y-180 bg-gray-700 rounded-xl flex flex-col items-center justify-center border border-gray-600 shadow-lg p-4 text-center">
+                            <span class="text-6xl font-bold mb-4">{{ currentCard.hanzi }}</span>
+                            <span class="text-2xl text-blue-300 mb-2">{{ currentCard.pinyin }}</span>
+                            <span class="text-lg text-gray-200 mb-6">{{ currentCard.meaning }}</span>
+                            <button @click.stop="playSound(currentCard.hanzi)" class="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full mb-4">
+                                🔊 Ouvir
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="card" id="flashcard" onclick="revealCard()">
-        <div class="speaker" onclick="event.stopPropagation(); playAudio()">🔊</div>
-        <div class="hanzi" id="hanzi">北京大学</div>
-        
-        <div class="details" id="details">
-            <div class="pinyin" id="pinyin">Běijīng Dàxué</div>
-            <div class="portuguese" id="portuguese">Universidade de Pequim</div>
-            <div class="sentence" id="sentence">他在北京大学学习。</div>
+                <div v-if="flipped" class="flex gap-2 mt-8 w-full justify-center">
+                    <button @click="rateCard('Muito Difícil')" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded text-sm">Muito Difícil</button>
+                    <button @click="rateCard('Difícil')" class="bg-orange-600 hover:bg-orange-500 px-4 py-2 rounded text-sm">Difícil</button>
+                    <button @click="rateCard('Médio')" class="bg-yellow-600 hover:bg-yellow-500 px-4 py-2 rounded text-sm">Médio</button>
+                    <button @click="rateCard('Fácil')" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded text-sm">Fácil</button>
+                </div>
+            </div>
+            <div v-else class="text-center mt-20 text-gray-400">
+                Nenhum cartão disponível neste deck.
+            </div>
         </div>
 
-        <div class="hint" id="hint">Toque para revelar</div>
-    </div>
-
-    <div class="controls" id="controls">
-        <button class="btn-rating btn-hard" onclick="rateCard('hard')">Difícil</button>
-        <button class="btn-rating btn-good" onclick="rateCard('good')">Bom</button>
-        <button class="btn-rating btn-easy" onclick="rateCard('easy')">Fácil</button>
+        <!-- Aba de Progresso -->
+        <div v-if="currentTab === 'progresso'">
+            <h2 class="text-2xl font-bold mb-4">Seu Progresso</h2>
+            <div v-for="(deckCards, deckName) in decks" :key="deckName" class="mb-6 bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-xl font-semibold mb-3 border-b border-gray-700 pb-2">{{ deckName }}</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div class="bg-gray-700 p-3 rounded"><p class="text-sm text-gray-400">Muito Difícil</p><p class="text-xl font-bold text-red-400">{{ countCategory(deckCards, 'Muito Difícil') }}</p></div>
+                    <div class="bg-gray-700 p-3 rounded"><p class="text-sm text-gray-400">Difícil</p><p class="text-xl font-bold text-orange-400">{{ countCategory(deckCards, 'Difícil') }}</p></div>
+                    <div class="bg-gray-700 p-3 rounded"><p class="text-sm text-gray-400">Médio</p><p class="text-xl font-bold text-yellow-400">{{ countCategory(deckCards, 'Médio') }}</p></div>
+                    <div class="bg-gray-700 p-3 rounded"><p class="text-sm text-gray-400">Fácil</p><p class="text-xl font-bold text-green-400">{{ countCategory(deckCards, 'Fácil') }}</p></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        const flashcards = [
-    // 1. Campus, Estudos & PKU
-    { hanzi: "北京大学 (北大)", pinyin: "Běijīng Dàxué (Běidà)", pt: "Universidade de Pequim (PKU)", sentence: "我在北京大学学习。" },
-    { hanzi: "留学生", pinyin: "liúxuéshēng", pt: "Estudante internacional", sentence: "我们都是留学生。" },
-    { hanzi: "宿舍", pinyin: "sùshè", pt: "Dormitório / Alojamento", sentence: "我的宿舍很大。" },
-    { hanzi: "食堂", pinyin: "shítáng", pt: "Refeitório universitário", sentence: "我们去食堂吃饭。" },
-    { hanzi: "校园卡", pinyin: "xiàoyuán kǎ", pt: "Cartão do campus", sentence: "请刷校园卡。" },
-    { hanzi: "教室", pinyin: "jiàoshì", pt: "Sala de aula", sentence: "教室里没有人。" },
-    { hanzi: "办公室", pinyin: "bàngōngshì", pt: "Escritório / Secretaria", sentence: "老师在办公室。" },
-    { hanzi: "楼", pinyin: "lóu", pt: "Prédio / Edifício / Andar", sentence: "我在三楼。" },
-    { hanzi: "上课 / 下课", pinyin: "shàngkè / xiàkè", pt: "Entrar na aula / Sair da aula", sentence: "我们八点上课。" },
-    { hanzi: "考试 / 作业", pinyin: "kǎoshì / zuòyè", pt: "Prova / Dever de casa", sentence: "明天有考试。" },
-    { hanzi: "未名湖 / 博雅塔", pinyin: "Wèimíng Hú / Bóyǎ Tǎ", pt: "Lago Weiming / Torre Boya", sentence: "未名湖很漂亮。" },
-    { hanzi: "学校 / 图书馆", pinyin: "xuéxiào / túshūguǎn", pt: "Escola / Biblioteca", sentence: "我去图书馆看书。" },
-    { hanzi: "老师 / 学生 / 同学", pinyin: "lǎoshī / xuésheng / tóngxué", pt: "Professor / Estudante / Colega", sentence: "同学们好。" },
-    { hanzi: "学习 / 读 / 写", pinyin: "xuéxí / dú / xiě", pt: "Estudar / Ler / Escrever", sentence: "我学习汉语。" },
-    { hanzi: "汉语 / 汉字", pinyin: "hànyǔ / hànzì", pt: "Língua chinesa / Caracteres", sentence: "汉字很难。" },
-    { hanzi: "课 / 发音 / 练习", pinyin: "kè / fāyīn / liànxí", pt: "Aula / Pronúncia / Exercício", sentence: "请做练习。" },
-    { hanzi: "书 / 本子 / 本", pinyin: "shū / běnzi / běn", pt: "Livro / Caderno / Classificador", sentence: "这是一本书。" },
-    { hanzi: "词典 / 笔 / 字", pinyin: "cídiǎn / bǐ / zì", pt: "Dicionário / Caneta / Caractere", sentence: "借我一支笔。" },
+        const { createApp, ref, computed, watch, onMounted } = Vue;
 
-    // 2. Gastronomia, Restaurante & Compras
-    { hanzi: "菜单 / 买单 / 结账", pinyin: "càidān / mǎidān / jiézhàng", pt: "Cardápio / Pedir a conta", sentence: "服务员，买单！" },
-    { hanzi: "打包 / 服务员", pinyin: "dǎbāo / fúwùyuán", pt: "Para levar / Garçom", sentence: "这个菜打包。" },
-    { hanzi: "微辣 / 不辣", pinyin: "wēilà / bùlà", pt: "Pouco apimentado / Sem pimenta", sentence: "我要微辣的。" },
-    { hanzi: "宫保鸡丁 / 麻婆豆腐", pinyin: "gōngbǎo jīdīng / mápó dòufu", pt: "Frango Xadrez / Mapo Tofu", sentence: "宫保鸡丁很好吃。" },
-    { hanzi: "猪肉 / 牛肉 / 烤鸭", pinyin: "zhūròu / niúròu / kǎoyā", pt: "Porco / Bovina / Pato assado", sentence: "北京烤鸭很有名。" },
-    { hanzi: "筷子", pinyin: "kuàizi", pt: "Hashi (palitos)", sentence: "我会用筷子。" },
-    { hanzi: "饭店 / 餐厅 / 超市", pinyin: "fàndiàn / cāntīng / chāoshì", pt: "Restaurante / Supermercado", sentence: "我去超市买东西。" },
-    { hanzi: "吃 / 吃饭 / 喝", pinyin: "chī / chīfàn / hē", pt: "Comer / Refeição / Beber", sentence: "你喝什么？" },
-    { hanzi: "水 / 茶 / 咖啡", pinyin: "shuǐ / chá / kāfēi", pt: "Água / Chá / Café", sentence: "我想喝咖啡。" },
-    { hanzi: "苹果 / 西瓜 / 香蕉", pinyin: "píngguǒ / xīguā / xiāngjiāo", pt: "Maçã / Melancia / Banana", sentence: "我要买苹果。" },
-    { hanzi: "钱 / 美元 / 块", pinyin: "qián / měiyuán / kuài", pt: "Dinheiro / Dólar / Kuai", sentence: "这个多少钱？" },
+        createApp({
+            setup() {
+                const currentTab = ref('estudo');
+                const activeDeck = ref('Chinês Particular');
+                const flipped = ref(false);
+                const currentCard = ref(null);
 
-    // 3. Conectivos & Essenciais HSK
-    { hanzi: "微信 / 支付宝 / 扫码", pinyin: "Wēixìn / Zhīfùbǎo / sǎomǎ", pt: "WeChat / Alipay / Escanear QR", sentence: "我扫你。" },
-    { hanzi: "方便 / 需要 / 帮助", pinyin: "fāngbiàn / xūyào / bāngzhù", pt: "Conveniente / Precisar / Ajudar", sentence: "需要帮助吗？" },
-    { hanzi: "但是 / 所以 / 因为", pinyin: "dànshì / suǒyǐ / yīnwèi", pt: "Mas / Portanto / Porque", sentence: "因为下雨，所以我没去。" },
-    { hanzi: "是 / 有 / 没有", pinyin: "shì / yǒu / méiyǒu", pt: "Ser / Ter / Não ter", sentence: "我没有钱。" },
-    { hanzi: "去 / 来 / 回 / 进", pinyin: "qù / lái / huí / jìn", pt: "Ir / Vir / Voltar / Entrar", sentence: "请进。" },
-    { hanzi: "想 / 喜欢 / 觉得", pinyin: "xiǎng / xǐhuān / juéde", pt: "Querer / Gostar / Achar", sentence: "我觉得很好。" },
-    { hanzi: "要 / 会 / 能 / 可以", pinyin: "yào / huì / néng / kěyǐ", pt: "Querer / Saber / Poder", sentence: "我会说汉语。" },
-    { hanzi: "认识 / 知道", pinyin: "rènshi / zhīdào", pt: "Conhecer / Saber", sentence: "很高兴认识你。" },
+                const defaultDecks = {
+                    'Chinês Particular': [
+                        { id: 1, hanzi: '安迪', pinyin: 'Āndí', meaning: 'Andy (nome próprio)', category: 'Médio' },
+                        { id: 2, hanzi: '什么', pinyin: 'shénme', meaning: 'O que / Qual', category: 'Médio' },
+                        { id: 3, hanzi: '哪儿', pinyin: 'nǎr', meaning: 'Onde', category: 'Médio' },
+                        { id: 4, hanzi: '哪里', pinyin: 'nǎli', meaning: 'Onde', category: 'Médio' },
+                        { id: 5, hanzi: '什么时候', pinyin: 'shénme shíhou', meaning: 'Quando / Que horas', category: 'Médio' },
+                        { id: 6, hanzi: '几点', pinyin: 'jǐ diǎn', meaning: 'Que horas', category: 'Médio' },
+                        { id: 7, hanzi: '现在', pinyin: 'xiànzài', meaning: 'Agora', category: 'Médio' },
+                        { id: 8, hanzi: '怎么', pinyin: 'zěnme', meaning: 'Como / De que forma', category: 'Médio' },
+                        { id: 9, hanzi: '写', pinyin: 'xiě', meaning: 'Escrever', category: 'Médio' },
+                        { id: 10, hanzi: '说', pinyin: 'shuō', meaning: 'Falar', category: 'Médio' },
+                        { id: 11, hanzi: '去', pinyin: 'qù', meaning: 'Ir', category: 'Médio' },
+                        { id: 12, hanzi: '做', pinyin: 'zuò', meaning: 'Fazer', category: 'Médio' },
+                        { id: 13, hanzi: '这个怎么说', pinyin: 'zhè ge zěnme shuō', meaning: 'Como se fala isso?', category: 'Médio' },
+                        { id: 14, hanzi: '样', pinyin: 'yàng', meaning: 'Tipo / Aparência / Maneira', category: 'Médio' },
+                        { id: 15, hanzi: '久', pinyin: 'jiǔ', meaning: 'Muito tempo / Quanto tempo', category: 'Médio' },
+                        { id: 16, hanzi: '多少钱', pinyin: 'duōshao qián', meaning: 'Quanto custa?', category: 'Médio' },
+                        { id: 17, hanzi: '多大', pinyin: 'duō dà', meaning: 'Qual idade? / Quão grande?', category: 'Médio' },
+                        { id: 18, hanzi: '岁', pinyin: 'suì', meaning: 'Anos de idade', category: 'Médio' },
+                        { id: 19, hanzi: '您多大年纪了', pinyin: 'nín duō dà niánjì le', meaning: 'Qual a sua idade? (para idosos)', category: 'Médio' },
+                        { id: 20, hanzi: '百', pinyin: 'bǎi', meaning: 'Custo / Cem', category: 'Médio' },
+                        { id: 21, hanzi: '千', pinyin: 'qiān', meaning: 'Mil', category: 'Médio' },
+                        { id: 22, hanzi: '万', pinyin: 'wàn', meaning: 'Dez mil', category: 'Médio' },
+                        { id: 23, hanzi: '亿', pinyin: 'yì', meaning: 'Cem milhões', category: 'Médio' },
+                        { id: 24, hanzi: '五万', pinyin: 'wǔ wàn', meaning: '50.000', category: 'Médio' },
+                        { id: 25, hanzi: '十万', pinyin: 'shí wàn', meaning: '100.000', category: 'Médio' },
+                        { id: 26, hanzi: '百万', pinyin: 'bǎi wàn', meaning: '1.000.000', category: 'Médio' },
+                        { id: 27, hanzi: '飞机', pinyin: 'fēijī', meaning: 'Avião', category: 'Médio' },
+                        { id: 28, hanzi: '生意', pinyin: 'shēngyi', meaning: 'Negócio / Comércio', category: 'Médio' },
+                        { id: 29, hanzi: '衣', pinyin: 'yī', meaning: 'Roupa', category: 'Médio' },
+                        { id: 30, hanzi: '上衣', pinyin: 'shàngyī', meaning: 'Blusa / Casaco', category: 'Médio' },
+                        { id: 31, hanzi: '下装', pinyin: 'xiàzhuāng', meaning: 'Roupas de baixo (calça, saia)', category: 'Médio' },
+                        { id: 32, hanzi: '木', pinyin: 'mù', meaning: 'Madeira', category: 'Médio' },
+                        { id: 33, hanzi: '金', pinyin: 'jīn', meaning: 'Ouro / Metal', category: 'Médio' },
+                        { id: 34, hanzi: '年', pinyin: 'nián', meaning: 'Ano', category: 'Médio' },
+                        { id: 35, hanzi: '月', pinyin: 'yuè', meaning: 'Mês / Lua', category: 'Médio' },
+                        { id: 36, hanzi: '号 / 日', pinyin: 'hào / rì', meaning: 'Dia / Data', category: 'Médio' },
+                        { id: 37, hanzi: '大前天', pinyin: 'dàqiántiān', meaning: 'Três dias atrás', category: 'Médio' },
+                        { id: 38, hanzi: '前天', pinyin: 'qiántiān', meaning: 'Anteontem', category: 'Médio' },
+                        { id: 39, hanzi: '昨天', pinyin: 'zuótiān', meaning: 'Ontem', category: 'Médio' },
+                        { id: 40, hanzi: '今天', pinyin: 'jīntiān', meaning: 'Hoje', category: 'Médio' },
+                        { id: 41, hanzi: '明天', pinyin: 'míngtiān', meaning: 'Amanhã', category: 'Médio' },
+                        { id: 42, hanzi: '后天', pinyin: 'hòutiān', meaning: 'Depois de amanhã', category: 'Médio' },
+                        { id: 43, hanzi: '大后天', pinyin: 'dàhòutiān', meaning: 'Daqui a três dias', category: 'Médio' },
+                        { id: 44, hanzi: '谁', pinyin: 'shéi / shuí', meaning: 'Quem', category: 'Médio' },
+                        { id: 45, hanzi: '星期四 / 周四', pinyin: 'xīngqīsì / zhōusì', meaning: 'Quinta-feira', category: 'Médio' },
+                        { id: 46, hanzi: '多高', pinyin: 'duō gāo', meaning: 'Qual altura?', category: 'Médio' },
+                        { id: 47, hanzi: '买', pinyin: 'mǎi', meaning: 'Comprar', category: 'Médio' },
+                        { id: 48, hanzi: '卖', pinyin: 'mài', meaning: 'Vender', category: 'Médio' },
+                        { id: 49, hanzi: '面条', pinyin: 'miàntiáo', meaning: 'Macarrão', category: 'Médio' },
+                        { id: 50, hanzi: '晚安', pinyin: 'wǎn\'ān', meaning: 'Boa noite (despedida para dormir)', category: 'Médio' },
+                        { id: 51, hanzi: '早安', pinyin: 'zǎo\'ān', meaning: 'Bom dia', category: 'Médio' },
+                        { id: 52, hanzi: '午安', pinyin: 'wǔ\'ān', meaning: 'Boa tarde', category: 'Médio' },
+                        { id: 53, hanzi: '早上好', pinyin: 'zǎoshang hǎo', meaning: 'Bom dia', category: 'Médio' },
+                        { id: 54, hanzi: '晚上好', pinyin: 'wǎnshang hǎo', meaning: 'Boa noite (saudação)', category: 'Médio' },
+                        { id: 55, hanzi: '上午', pinyin: 'shàngwǔ', meaning: 'Manhã (8h-11h)', category: 'Médio' },
+                        { id: 56, hanzi: '中午', pinyin: 'zhōngwǔ', meaning: 'Meio-dia (11h-13h)', category: 'Médio' },
+                        { id: 57, hanzi: '下午', pinyin: 'xiàwǔ', meaning: 'Tarde (13h-18h)', category: 'Médio' },
+                        { id: 58, hanzi: '夜晚', pinyin: 'yèwǎn', meaning: 'Noite (21h-23h)', category: 'Médio' },
+                        { id: 59, hanzi: '午夜', pinyin: 'wǔyè', meaning: 'Meia-noite', category: 'Médio' },
+                        { id: 60, hanzi: '会', pinyin: 'huì', meaning: 'Saber / Poder / Ir (futuro)', category: 'Médio' },
+                        { id: 61, hanzi: '发音', pinyin: 'fāyīn', meaning: 'Pronúncia', category: 'Médio' },
+                        { id: 62, hanzi: '欢迎', pinyin: 'huānyíng', meaning: 'Bem-vindo', category: 'Médio' },
+                        { id: 63, hanzi: '感谢', pinyin: 'gǎnxiè', meaning: 'Agradecer', category: 'Médio' },
+                        { id: 64, hanzi: '竹', pinyin: 'zhú', meaning: 'Bambu', category: 'Médio' },
+                        { id: 65, hanzi: '春', pinyin: 'chūn', meaning: 'Primavera', category: 'Médio' },
+                        { id: 66, hanzi: '夏', pinyin: 'xià', meaning: 'Verão', category: 'Médio' },
+                        { id: 67, hanzi: '秋', pinyin: 'qiū', meaning: 'Outono', category: 'Médio' },
+                        { id: 68, hanzi: '冬', pinyin: 'dōng', meaning: 'Inverno', category: 'Médio' },
+                        { id: 69, hanzi: '在', pinyin: 'zài', meaning: 'Estar em / Localizar-se', category: 'Médio' },
+                        { id: 70, hanzi: '前', pinyin: 'qián', meaning: 'Frente / Em frente', category: 'Médio' },
+                        { id: 71, hanzi: '后', pinyin: 'hòu', meaning: 'Atrás', category: 'Médio' },
+                        { id: 72, hanzi: '做', pinyin: 'zuò', meaning: 'Fazer / Trabalhar', category: 'Médio' },
+                        { id: 73, hanzi: '话', pinyin: 'huà', meaning: 'Fala / Palavra', category: 'Médio' },
+                        { id: 74, hanzi: '左', pinyin: 'zuǒ', meaning: 'Esquerda', category: 'Médio' },
+                        { id: 75, hanzi: '右', pinyin: 'yòu', meaning: 'Direita', category: 'Médio' },
+                        { id: 76, hanzi: '上', pinyin: 'shàng', meaning: 'Cima / Subir', category: 'Médio' },
+                        { id: 77, hanzi: '下', pinyin: 'xià', meaning: 'Baixo / Descer / Chover', category: 'Médio' },
+                        { id: 78, hanzi: '帮忙', pinyin: 'bāngmáng', meaning: 'Ajudar', category: 'Médio' },
+                        { id: 79, hanzi: '声调', pinyin: 'shēngdiào', meaning: 'Tom (da pronúncia)', category: 'Médio' },
+                        { id: 80, hanzi: '商量', pinyin: 'shāngliang', meaning: 'Discutir / Negociar gentilmente', category: 'Médio' },
+                        { id: 81, hanzi: '长城', pinyin: 'chángchéng', meaning: 'Grande Muralha da China', category: 'Médio' },
+                        { id: 82, hanzi: '下雨了', pinyin: 'xià yǔ le', meaning: 'Choveu / Está chovendo', category: 'Médio' },
+                        { id: 83, hanzi: '数论', pinyin: 'shùlùn', meaning: 'Teoria dos números', category: 'Médio' },
+                        { id: 84, hanzi: '你的老师是谁', pinyin: 'nǐ de lǎoshī shì shuí', meaning: 'Quem é o seu professor?', category: 'Médio' },
+                        { id: 85, hanzi: '茶点在什么时间', pinyin: 'chádiǎn zài shénme shíjiān', meaning: 'A que horas é o lanche/chá?', category: 'Médio' },
+                        { id: 86, hanzi: '可乐怎么卖', pinyin: 'kělè zěnme mài', meaning: 'Quanto custa a Coca-Cola?', category: 'Médio' },
+                        { id: 87, hanzi: '我在格湖前面', pinyin: 'wǒ zài gé hú qiánmiàn', meaning: 'Eu estou na frente do lago Ge', category: 'Médio' },
+                        { id: 88, hanzi: '体重', pinyin: 'tǐzhòng', meaning: 'Peso corporal', category: 'Médio' },
+                        { id: 89, hanzi: '该你了', pinyin: 'gāi nǐ le', meaning: 'Sua vez', category: 'Médio' },
+                        { id: 90, hanzi: '桌子', pinyin: 'zhuōzi', meaning: 'Mesa', category: 'Médio' },
+                        { id: 91, hanzi: '椅子', pinyin: 'yǐzi', meaning: 'Cadeira', category: 'Médio' },
+                        { id: 92, hanzi: '杯子', pinyin: 'bēizi', meaning: 'Copo / Xícara', category: 'Médio' },
+                        { id: 93, hanzi: '个子', pinyin: 'gèzi', meaning: 'Estatura / Altura', category: 'Médio' },
+                        { id: 94, hanzi: '身体', pinyin: 'shēntǐ', meaning: 'Corpo / Saúde', category: 'Médio' },
+                        { id: 95, hanzi: '想', pinyin: 'xiǎng', meaning: 'Querer / Desejar / Pensar / Sentir falta', category: 'Médio' },
+                        { id: 96, hanzi: '吃', pinyin: 'chī', meaning: 'Comer', category: 'Médio' },
+                        { id: 97, hanzi: '喝', pinyin: 'hē', meaning: 'Beber', category: 'Médio' },
+                        { id: 98, hanzi: '别', pinyin: 'bié', meaning: 'Não... (proibição / don\'t)', category: 'Médio' },
+                        { id: 99, hanzi: '晚饭', pinyin: 'wǎnfàn', meaning: 'Jantar', category: 'Médio' },
+                        { id: 100, hanzi: '午饭', pinyin: 'wǔfàn', meaning: 'Almoço', category: 'Médio' },
+                        { id: 101, hanzi: '咖啡', pinyin: 'kāfēi', meaning: 'Café', category: 'Médio' },
+                        { id: 102, hanzi: '骑', pinyin: 'qí', meaning: 'Montar / Mandar (ex: de bicicleta)', category: 'Médio' },
+                        { id: 103, hanzi: '自行车 / 单车', pinyin: 'zìxíngchē / dānchē', meaning: 'Bicicleta', category: 'Médio' },
+                        { id: 104, hanzi: '烤鸭', pinyin: 'kǎoyā', meaning: 'Pato assado', category: 'Médio' },
+                        { id: 105, hanzi: '牛奶', pinyin: 'niúnǎi', meaning: 'Leite de vaca', category: 'Médio' },
+                        { id: 106, hanzi: '米饭', pinyin: 'mǐfàn', meaning: 'Arroz cozido', category: 'Médio' },
+                        { id: 107, hanzi: '面包', pinyin: 'miànbāo', meaning: 'Pão', category: 'Médio' },
+                        { id: 108, hanzi: '包子', pinyin: 'bāozi', meaning: 'Pão no vapor recheado', category: 'Médio' },
+                        { id: 109, hanzi: '健康', pinyin: 'jiànkāng', meaning: 'Saúde / Saudável', category: 'Médio' },
+                        { id: 110, hanzi: '词典', pinyin: 'cídiǎn', meaning: 'Dicionário', category: 'Médio' },
+                        { id: 111, hanzi: '啤酒', pinyin: 'píjiǔ', meaning: 'Cerveja', category: 'Médio' },
+                        { id: 112, hanzi: '换', pinyin: 'huàn', meaning: 'Trocar / Mudar', category: 'Médio' },
+                        { id: 113, hanzi: '块', pinyin: 'kuài', meaning: 'Unidade monetária (Yuan)', category: 'Médio' },
+                        { id: 114, hanzi: '本子', pinyin: 'běnzi', meaning: 'Caderno', category: 'Médio' },
+                        { id: 115, hanzi: '毛', pinyin: 'máo', meaning: '10 centavos de Yuan (jiao)', category: 'Médio' },
+                        { id: 116, hanzi: '下次见', pinyin: 'xià cì jiàn', meaning: 'Até a próxima', category: 'Médio' },
+                        { id: 117, hanzi: '下星期四见', pinyin: 'xià xīngqīsì jiàn', meaning: 'Vejo você na próxima quinta-feira', category: 'Médio' },
+                        { id: 118, hanzi: '周几', pinyin: 'zhōu jǐ', meaning: 'Qual dia da semana?', category: 'Médio' },
+                        { id: 119, hanzi: '时', pinyin: 'shí', meaning: 'Hora / Tempo oficial', category: 'Médio' },
+                        { id: 120, hanzi: '点', pinyin: 'diǎn', meaning: 'Horas / Ponto', category: 'Médio' },
+                        { id: 121, hanzi: '秒', pinyin: 'miǎo', meaning: 'Segundo', category: 'Médio' },
+                        { id: 122, hanzi: '分', pinyin: 'fēn', meaning: 'Minuto / Centavo', category: 'Médio' },
+                        { id: 123, hanzi: '房间', pinyin: 'fángjiān', meaning: 'Quarto / Cômodo', category: 'Médio' },
+                        { id: 124, hanzi: '地点', pinyin: 'dìdiǎn', meaning: 'Local / Lugar', category: 'Médio' },
+                        { id: 125, hanzi: '西', pinyin: 'xī', meaning: 'Oeste', category: 'Médio' },
+                        { id: 126, hanzi: '北', pinyin: 'běi', meaning: 'Norte', category: 'Médio' },
+                        { id: 127, hanzi: '南', pinyin: 'nán', meaning: 'Sul', category: 'Médio' },
+                        { id: 128, hanzi: '东', pinyin: 'dōng', meaning: 'Leste', category: 'Médio' },
+                        { id: 129, hanzi: '季节', pinyin: 'jìjié', meaning: 'Estação do ano', category: 'Médio' },
+                        { id: 130, hanzi: '周日', pinyin: 'zhōurì', meaning: 'Domingo', category: 'Médio' },
+                        { id: 131, hanzi: '练习', pinyin: 'liànxí', meaning: 'Exercício / Praticar', category: 'Médio' },
+                        { id: 132, hanzi: '姐姐', pinyin: 'jiějie', meaning: 'Irmã mais velha', category: 'Médio' },
+                        { id: 133, hanzi: '镜子', pinyin: 'jìngzi', meaning: 'Espelho', category: 'Médio' },
+                        { id: 134, hanzi: '图书馆', pinyin: 'túshūguǎn', meaning: 'Biblioteca', category: 'Médio' },
+                        { id: 135, hanzi: '就', pinyin: 'jiù', meaning: 'Então / Logo', category: 'Médio' },
+                        { id: 136, hanzi: '笔', pinyin: 'bǐ', meaning: 'Caneta / Lápis', category: 'Médio' },
+                        { id: 137, hanzi: '书包', pinyin: 'shūbāo', meaning: 'Mochila', category: 'Médio' },
+                        { id: 138, hanzi: '食堂', pinyin: 'shítáng', meaning: 'Refeitório / Sala de jantar', category: 'Médio' }
+                    ],
+                    'Chinês PKU': [
+                        { id: 139, hanzi: '我', pinyin: 'wǒ', meaning: 'Eu', category: 'Médio' },
+                        { id: 140, hanzi: '你', pinyin: 'nǐ', meaning: 'Você', category: 'Médio' },
+                        { id: 141, hanzi: '他', pinyin: 'tā', meaning: 'Ele', category: 'Médio' },
+                        { id: 142, hanzi: '她', pinyin: 'tā', meaning: 'Ela', category: 'Médio' },
+                        { id: 143, hanzi: '你好', pinyin: 'nǐ hǎo', meaning: 'Olá', category: 'Médio' },
+                        { id: 144, hanzi: '您好', pinyin: 'nín hǎo', meaning: 'Olá (formal/respeitoso)', category: 'Médio' },
+                        { id: 145, hanzi: '不太好', pinyin: 'bú tài hǎo', meaning: 'Não muito bem', category: 'Médio' },
+                        { id: 146, hanzi: '国家', pinyin: 'guójiā', meaning: 'País', category: 'Médio' },
+                        { id: 147, hanzi: '生词', pinyin: 'shēngcí', meaning: 'Vocabulário novo / Palavra nova', category: 'Médio' },
+                        { id: 148, hanzi: '钱', pinyin: 'qián', meaning: 'Dinheiro', category: 'Médio' },
+                        { id: 149, hanzi: '块', pinyin: 'kuài', meaning: 'Unidade monetária (Yuan)', category: 'Médio' },
+                        { id: 150, hanzi: '斤', pinyin: 'jīn', meaning: 'Meio quilo (500g)', category: 'Médio' },
+                        { id: 151, hanzi: '两斤', pinyin: 'liǎng jīn', meaning: '1 kg (dois jīn)', category: 'Médio' },
+                        { id: 152, hanzi: '要', pinyin: 'yào', meaning: 'Querer / Precisar', category: 'Médio' },
+                        { id: 153, hanzi: '苹果', pinyin: 'píngguǒ', meaning: 'Maçã', category: 'Médio' },
+                        { id: 154, hanzi: '瓶', pinyin: 'píng', meaning: 'Garrafa (classificador)', category: 'Médio' },
+                        { id: 155, hanzi: '包', pinyin: 'bāo', meaning: 'Pacote / Bolsa', category: 'Médio' },
+                        { id: 156, hanzi: '杯', pinyin: 'bēi', meaning: 'Copo / Xícara', category: 'Médio' },
+                        { id: 157, hanzi: '稍等一下', pinyin: 'shāo děng yíxià', meaning: 'Espere um momento', category: 'Médio' },
+                        { id: 158, hanzi: '水果', pinyin: 'shuǐguǒ', meaning: 'Fruta', category: 'Médio' },
+                        { id: 159, hanzi: '西瓜', pinyin: 'xīguā', meaning: 'Melancia', category: 'Médio' },
+                        { id: 160, hanzi: '香蕉', pinyin: 'xiāngjiāo', meaning: 'Banana', category: 'Médio' },
+                        { id: 161, hanzi: '饺子', pinyin: 'jiǎozi', meaning: 'Dumpling / Guiozá', category: 'Médio' },
+                        { id: 162, hanzi: '饼干', pinyin: 'bǐnggān', meaning: 'Biscoito / Bolacha', category: 'Médio' },
+                        { id: 163, hanzi: '可乐', pinyin: 'kělè', meaning: 'Coca-Cola', category: 'Médio' },
+                        { id: 164, hanzi: '咖啡', pinyin: 'kāfēi', meaning: 'Café', category: 'Médio' },
+                        { id: 165, hanzi: '面包', pinyin: 'miànbāo', meaning: 'Pão', category: 'Médio' },
+                        { id: 166, hanzi: '酸奶', pinyin: 'suānnǎi', meaning: 'Iogurte', category: 'Médio' },
+                        { id: 167, hanzi: '英语', pinyin: 'yīngyǔ', meaning: 'Língua inglesa', category: 'Médio' },
+                        { id: 168, hanzi: '请问', pinyin: 'qǐngwèn', meaning: 'Com licença, posso perguntar?', category: 'Médio' },
+                        { id: 169, hanzi: '在', pinyin: 'zài', meaning: 'Estar em / Localizar-se', category: 'Médio' },
+                        { id: 170, hanzi: '哪里', pinyin: 'nǎli', meaning: 'Onde', category: 'Médio' },
+                        { id: 171, hanzi: '这里', pinyin: 'zhèlǐ', meaning: 'Aqui', category: 'Médio' },
+                        { id: 172, hanzi: '那里', pinyin: 'nàlǐ', meaning: 'Lá / Ali', category: 'Médio' },
+                        { id: 173, hanzi: '洗手间', pinyin: 'xǐshǒujiān', meaning: 'Banheiro', category: 'Médio' },
+                        { id: 174, hanzi: '右边', pinyin: 'yòubiān', meaning: 'Lado direito', category: 'Médio' },
+                        { id: 175, hanzi: '左边', pinyin: 'zuǒbiān', meaning: 'Lado esquerdo', category: 'Médio' },
+                        { id: 176, hanzi: '后边', pinyin: 'hòubiān', meaning: 'Lado de trás / Atrás', category: 'Médio' },
+                        { id: 177, hanzi: '超市', pinyin: 'chāoshì', meaning: 'Supermercado', category: 'Médio' },
+                        { id: 178, hanzi: '医院', pinyin: 'yīyuàn', meaning: 'Hospital', category: 'Médio' },
+                        { id: 179, hanzi: '商店', pinyin: 'shāngdiàn', meaning: 'Loja', category: 'Médio' },
+                        { id: 180, hanzi: '饭馆', pinyin: 'fànguǎn', meaning: 'Restaurante', category: 'Médio' },
+                        { id: 181, hanzi: '酒吧', pinyin: 'jiǔbā', meaning: 'Bar', category: 'Médio' },
+                        { id: 182, hanzi: '往', pinyin: 'wǎng', meaning: 'Ir em direção a / Hacia', category: 'Médio' },
+                        { id: 183, hanzi: '拐', pinyin: 'guǎi', meaning: 'Virar / Dobrar (uma esquina)', category: 'Médio' }
+                    ],
+                    'Chinese for HSK 1': [
+                        { id: 184, hanzi: '你好', pinyin: 'nǐ hǎo', meaning: 'Olá', category: 'Médio' },
+                        { id: 185, hanzi: '你叫什么名字', pinyin: 'nǐ jiào shénme míngzi', meaning: 'Qual é o seu nome?', category: 'Médio' },
+                        { id: 186, hanzi: '叫', pinyin: 'jiào', meaning: 'Chamar-se / Chamar', category: 'Médio' },
+                        { id: 187, hanzi: '什么', pinyin: 'shénme', meaning: 'O que / Qual', category: 'Médio' },
+                        { id: 188, hanzi: '名字', pinyin: 'míngzi', meaning: 'Nome', category: 'Médio' },
+                        { id: 189, hanzi: '我', pinyin: 'wǒ', meaning: 'Eu', category: 'Médio' },
+                        { id: 190, hanzi: '很', pinyin: 'hěn', meaning: 'Muito', category: 'Médio' },
+                        { id: 191, hanzi: '高兴', pinyin: 'gāoxìng', meaning: 'Feliz / Contente', category: 'Médio' },
+                        { id: 192, hanzi: '认识', pinyin: 'rènshi', meaning: 'Conhecer (pessoas)', category: 'Médio' },
+                        { id: 193, hanzi: '很高兴认识你', pinyin: 'hěn gāoxìng rènshi nǐ', meaning: 'Prazer em conhecê-lo!', category: 'Médio' },
+                        { id: 194, hanzi: '也', pinyin: 'yě', meaning: 'Também', category: 'Médio' },
+                        { id: 195, hanzi: '是', pinyin: 'shì', meaning: 'Ser', category: 'Médio' },
+                        { id: 196, hanzi: '国', pinyin: 'guó', meaning: 'País', category: 'Médio' },
+                        { id: 197, hanzi: '人', pinyin: 'rén', meaning: 'Pessoa', category: 'Médio' },
+                        { id: 198, hanzi: '中国', pinyin: 'zhōngguó', meaning: 'China', category: 'Médio' },
+                        { id: 199, hanzi: '你多大了', pinyin: 'nǐ duō dà le', meaning: 'Quantos anos você tem?', category: 'Médio' },
+                        { id: 200, hanzi: '零', pinyin: 'líng', meaning: 'Zero', category: 'Médio' },
+                        { id: 201, hanzi: '一', pinyin: 'yī', meaning: 'Um', category: 'Médio' },
+                        { id: 202, hanzi: '二', pinyin: 'èr', meaning: 'Dois', category: 'Médio' },
+                        { id: 203, hanzi: '三', pinyin: 'sān', meaning: 'Três', category: 'Médio' },
+                        { id: 204, hanzi: '四', pinyin: 'sì', meaning: 'Quatro', category: 'Médio' },
+                        { id: 205, hanzi: '五', pinyin: 'wǔ', meaning: 'Cinco', category: 'Médio' },
+                        { id: 206, hanzi: '六', pinyin: 'liù', meaning: 'Seis', category: 'Médio' },
+                        { id: 207, hanzi: '七', pinyin: 'qī', meaning: 'Sete', category: 'Médio' },
+                        { id: 208, hanzi: '八', pinyin: 'bā', meaning: 'Oito', category: 'Médio' },
+                        { id: 209, hanzi: '九', pinyin: 'jiǔ', meaning: 'Nove', category: 'Médio' },
+                        { id: 210, hanzi: '十', pinyin: 'shí', meaning: 'Dez', category: 'Médio' },
+                        { id: 211, hanzi: '多', pinyin: 'duō', meaning: 'Quanto / Muito', category: 'Médio' },
+                        { id: 212, hanzi: '大', pinyin: 'dà', meaning: 'Grande', category: 'Médio' },
+                        { id: 213, hanzi: '了', pinyin: 'le', meaning: 'Partícula verbal / mudança de estado', category: 'Médio' },
+                        { id: 214, hanzi: '岁', pinyin: 'suì', meaning: 'Anos de idade', category: 'Médio' },
+                        { id: 215, hanzi: '呢', pinyin: 'ne', meaning: 'Partícula interrogativa ("e você?")', category: 'Médio' },
+                        { id: 216, hanzi: '他', pinyin: 'tā', meaning: 'Ele', category: 'Médio' },
+                        { id: 217, hanzi: '她', pinyin: 'tā', meaning: 'Ela', category: 'Médio' },
+                        { id: 218, hanzi: '你的', pinyin: 'nǐ de', meaning: 'Seu / Sua', category: 'Médio' },
+                        { id: 219, hanzi: '的', pinyin: 'de', meaning: 'Partícula possessiva', category: 'Médio' },
+                        { id: 220, hanzi: '我的', pinyin: 'wǒ de', meaning: 'Meu / Minha', category: 'Médio' },
+                        { id: 221, hanzi: '他的', pinyin: 'tā de', meaning: 'Dele / Sua', category: 'Médio' },
+                        { id: 222, hanzi: '电话', pinyin: 'diànhuà', meaning: 'Telefone', category: 'Médio' },
+                        { id: 223, hanzi: '号码', pinyin: 'hàomǎ', meaning: 'Número', category: 'Médio' },
+                        { id: 224, hanzi: '多少', pinyin: 'duōshao', meaning: 'Quanto(s)', category: 'Médio' },
+                        { id: 225, hanzi: '明天', pinyin: 'míngtiān', meaning: 'Amanhã', category: 'Médio' },
+                        { id: 226, hanzi: '给', pinyin: 'gěi', meaning: 'Dar / Para / Ligar', category: 'Médio' },
+                        { id: 227, hanzi: '打电话', pinyin: 'dǎ diànhuà', meaning: 'Fazer uma ligação', category: 'Médio' },
+                        { id: 228, hanzi: '同学', pinyin: 'tóngxué', meaning: 'Colega de classe / Estudante', category: 'Médio' },
+                        { id: 229, hanzi: '们', pinyin: 'men', meaning: 'Partícula de plural para pessoas', category: 'Médio' },
+                        { id: 230, hanzi: '老师', pinyin: 'lǎoshī', meaning: 'Professor', category: 'Médio' },
+                        { id: 231, hanzi: '朋友', pinyin: 'péngyou', meaning: 'Amigo', category: 'Médio' },
+                        { id: 232, hanzi: '怎么样', pinyin: 'zěnmeyàng', meaning: 'Como vai? / O que acha?', category: 'Médio' },
+                        { id: 233, hanzi: '不客气', pinyin: 'bú kèqi', meaning: 'De nada', category: 'Médio' },
+                        { id: 234, hanzi: '对不起', pinyin: 'duìbuqǐ', meaning: 'Desculpe', category: 'Médio' },
+                        { id: 235, hanzi: '没关系', pinyin: 'méi guānxi', meaning: 'Sem problemas / Não faz mal', category: 'Médio' },
+                        { id: 236, hanzi: '再见', pinyin: 'zàijiàn', meaning: 'Tchau / Até logo', category: 'Médio' },
+                        { id: 237, hanzi: '见', pinyin: 'jiàn', meaning: 'Ver / Encontrar', category: 'Médio' },
+                        { id: 238, hanzi: '谁', pinyin: 'shéi / shuí', meaning: 'Quem', category: 'Médio' },
+                        { id: 239, hanzi: '妈妈', pinyin: 'māma', meaning: 'Mãe', category: 'Médio' },
+                        { id: 240, hanzi: '今年', pinyin: 'jīnnián', meaning: 'Este ano', category: 'Médio' },
+                        { id: 241, hanzi: '这个', pinyin: 'zhè ge', meaning: 'Este / Esta', category: 'Médio' },
+                        { id: 242, hanzi: '爸爸', pinyin: 'bàba', meaning: 'Pai', category: 'Médio' },
+                        { id: 243, hanzi: '哥哥', pinyin: 'gēge', meaning: 'Irmão mais velho', category: 'Médio' },
+                        { id: 244, hanzi: '妹妹', pinyin: 'mèimei', meaning: 'Irmã mais nova', category: 'Médio' },
+                        { id: 245, hanzi: '漂亮', pinyin: 'piàoliang', meaning: 'Bonita', category: 'Médio' },
+                        { id: 246, hanzi: '有', pinyin: 'yǒu', meaning: 'Ter / Haver', category: 'Médio' },
+                        { id: 247, hanzi: '狗', pinyin: 'gǒu', meaning: 'Cachorro', category: 'Médio' },
+                        { id: 248, hanzi: '猫', pinyin: 'māo', meaning: 'Gato', category: 'Médio' },
+                        { id: 249, hanzi: '只', pinyin: 'zhī', meaning: 'Classificador para animais', category: 'Médio' },
+                        { id: 250, hanzi: '没有', pinyin: 'méiyǒu', meaning: 'Não ter', category: 'Médio' },
+                        { id: 251, hanzi: '汪汪', pinyin: 'wāngwāng', meaning: 'Au au (latido)', category: 'Médio' },
+                        { id: 252, hanzi: '喵喵', pinyin: 'miāomiāo', meaning: 'Miau (miado)', category: 'Médio' },
+                        { id: 253, hanzi: '小', pinyin: 'xiǎo', meaning: 'Pequeno', category: 'Médio' },
+                        { id: 254, hanzi: '两', pinyin: 'liǎng', meaning: 'Dois (quantidade)', category: 'Médio' },
+                        { id: 255, hanzi: '学习', pinyin: 'xuéxí', meaning: 'Estudar', category: 'Médio' },
+                        { id: 256, hanzi: '汉语', pinyin: 'hànyǔ', meaning: 'Língua chinesa (Mandarim)', category: 'Médio' },
+                        { id: 257, hanzi: '学校', pinyin: 'xuéxiào', meaning: 'Escola', category: 'Médio' },
+                        { id: 258, hanzi: '儿子', pinyin: 'érzi', meaning: 'Filho', category: 'Médio' },
+                        { id: 259, hanzi: '女儿', pinyin: 'nǚ\'ér', meaning: 'Filha', category: 'Médio' },
+                        { id: 260, hanzi: '在', pinyin: 'zài', meaning: 'Estar em / Localizar-se', category: 'Médio' },
+                        { id: 261, hanzi: '北京', pinyin: 'běijīng', meaning: 'Pequim', category: 'Médio' },
+                        { id: 262, hanzi: '呢', pinyin: 'ne', meaning: 'Partícula de ação em andamento', category: 'Médio' },
+                        { id: 263, hanzi: '弟弟', pinyin: 'dìdi', meaning: 'Irmão mais novo', category: 'Médio' },
+                        { id: 264, hanzi: '一一点儿', pinyin: 'yìdiǎnr', meaning: 'Um pouco', category: 'Médio' },
+                        { id: 265, hanzi: '酷', pinyin: 'kù', meaning: 'Legal / Descolado (cool)', category: 'Médio' },
+                        { id: 266, hanzi: '对', pinyin: 'duì', meaning: 'Certo / Correto', category: 'Médio' },
+                        { id: 267, hanzi: '写', pinyin: 'xiě', meaning: 'Escrever', category: 'Médio' },
+                        { id: 268, hanzi: '汉字', pinyin: 'hànzì', meaning: 'Caracteres chineses', category: 'Médio' },
+                        { id: 269, hanzi: '太...了', pinyin: 'tài...le', meaning: 'Demais / Tão...', category: 'Médio' },
+                        { id: 270, hanzi: '怎么', pinyin: 'zěnme', meaning: 'Como', category: 'Médio' },
+                        { id: 271, hanzi: '读', pinyin: 'dú', meaning: 'Ler em voz alta', category: 'Médio' },
+                        { id: 272, hanzi: '北京大学', pinyin: 'běijīng dàxué', meaning: 'Universidade de Pequim', category: 'Médio' },
+                        { id: 273, hanzi: '看', pinyin: 'kàn', meaning: 'Olhar / Assistir / Ler', category: 'Médio' },
+                        { id: 274, hanzi: '电影', pinyin: 'diànyǐng', meaning: 'Filme', category: 'Médio' },
+                        { id: 275, hanzi: '你们', pinyin: 'nǐmen', meaning: 'Vocês', category: 'Médio' },
+                        { id: 276, hanzi: '今天', pinyin: 'jīntiān', meaning: 'Hoje', category: 'Médio' },
+                        { id: 277, hanzi: '想', pinyin: 'xiǎng', meaning: 'Querer / Desejar / Pensar', category: 'Médio' },
+                        { id: 278, hanzi: '几', pinyin: 'jǐ', meaning: 'Quantos', category: 'Médio' },
+                        { id: 279, hanzi: '点', pinyin: 'diǎn', meaning: 'Horas', category: 'Médio' },
+                        { id: 280, hanzi: '分', pinyin: 'fēn', meaning: 'Minutos', category: 'Médio' },
+                        { id: 281, hanzi: '吃饭', pinyin: 'chīfàn', meaning: 'Comer / Fazer uma refeição', category: 'Médio' },
+                        { id: 282, hanzi: '吧', pinyin: 'ba', meaning: 'Partícula de sugestão ("vamos...")', category: 'Médio' },
+                        { id: 283, hanzi: '好的', pinyin: 'hǎo de', meaning: 'Ok / Tudo bem', category: 'Médio' },
+                        { id: 284, hanzi: '中午', pinyin: 'zhōngwǔ', meaning: 'Meio-dia', category: 'Médio' },
+                        { id: 285, hanzi: '晚上', pinyin: 'wǎnshang', meaning: 'À noite', category: 'Médio' },
+                        { id: 286, hanzi: '电视', pinyin: 'diànshì', meaning: 'Televisão', category: 'Médio' },
+                        { id: 287, hanzi: '睡觉', pinyin: 'shuìjiào', meaning: 'Dormir', category: 'Médio' },
+                        { id: 288, hanzi: '什么时候', pinyin: 'shénme shíhou', meaning: 'Quando / Que horas', category: 'Médio' },
+                        { id: 289, hanzi: '星期', pinyin: 'xīngqī', meaning: 'Semana', category: 'Médio' },
+                        { id: 290, hanzi: '号', pinyin: 'hào', meaning: 'Dia do mês / Data', category: 'Médio' },
+                        { id: 291, hanzi: '生日', pinyin: 'shēngrì', meaning: 'Aniversário', category: 'Médio' },
+                        { id: 292, hanzi: '月', pinyin: 'yuè', meaning: 'Mês / Lua', category: 'Médio' },
+                        { id: 293, hanzi: '快乐', pinyin: 'kuàilè', meaning: 'Feliz', category: 'Médio' },
+                        { id: 294, hanzi: '天气', pinyin: 'tiānqì', meaning: 'Clima / Tempo', category: 'Médio' },
+                        { id: 295, hanzi: '雨', pinyin: 'yǔ', meaning: 'Chuva', category: 'Médio' },
+                        { id: 296, hanzi: '下雨', pinyin: 'xià yǔ', meaning: 'Chover', category: 'Médio' },
+                        { id: 297, hanzi: '电脑', pinyin: 'diànnǎo', meaning: 'Computador', category: 'Médio' },
+                        { id: 298, hanzi: '外面', pinyin: 'wàimiàn', meaning: 'Fora / Exterior', category: 'Médio' },
+                        { id: 299, hanzi: '热', pinyin: 'rè', meaning: 'Quente', category: 'Médio' },
+                        { id: 300, hanzi: '冷', pinyin: 'lěng', meaning: 'Frio', category: 'Médio' },
+                        { id: 301, hanzi: '有点儿', pinyin: 'yǒudiǎnr', meaning: 'Um pouco', category: 'Médio' },
+                        { id: 302, hanzi: '广州', pinyin: 'guǎngzhōu', meaning: 'Guangzhou', category: 'Médio' },
+                        { id: 303, hanzi: '哈尔滨', pinyin: 'hā\'ěrbīn', meaning: 'Harbin', category: 'Médio' },
+                        { id: 304, hanzi: '来', pinyin: 'lái', meaning: 'Vir / Chegar', category: 'Médio' },
+                        { id: 305, hanzi: '多', pinyin: 'duō', meaning: 'Muito', category: 'Médio' },
+                        { id: 306, hanzi: '车', pinyin: 'chē', meaning: 'Carro / Veículo', category: 'Médio' },
+                        { id: 307, hanzi: '工作', pinyin: 'gōngzuò', meaning: 'Trabalhar / Trabalho', category: 'Médio' },
+                        { id: 308, hanzi: '的时候', pinyin: 'de shíhou', meaning: 'Quando... / No momento em que...', category: 'Médio' },
+                        { id: 309, hanzi: '年', pinyin: 'nián', meaning: 'Ano', category: 'Médio' },
+                        { id: 310, hanzi: '上海', pinyin: 'shànghǎi', meaning: 'Xangai', category: 'Médio' }
+                    ],
+                    'Notes (Lista Oficial HSK 1 - 150 Palavras)': [
+                        { id: 311, hanzi: '爱', pinyin: 'ài', meaning: 'Amar', category: 'Médio' },
+                        { id: 312, hanzi: '八', pinyin: 'bā', meaning: 'Oito', category: 'Médio' },
+                        { id: 313, hanzi: '爸爸', pinyin: 'bàba', meaning: 'Pai', category: 'Médio' },
+                        { id: 314, hanzi: '杯子', pinyin: 'bēizi', meaning: 'Copo / Xícara', category: 'Médio' },
+                        { id: 315, hanzi: '北京', pinyin: 'běijīng', meaning: 'Pequim', category: 'Médio' },
+                        { id: 316, hanzi: '本', pinyin: 'běn', meaning: 'Classificador para livros', category: 'Médio' },
+                        { id: 317, hanzi: '不客气', pinyin: 'bú kèqi', meaning: 'De nada', category: 'Médio' },
+                        { id: 318, hanzi: '不', pinyin: 'bù', meaning: 'Não', category: 'Médio' },
+                        { id: 319, hanzi: '菜', pinyin: 'cài', meaning: 'Comida / Prato / Vegetal', category: 'Médio' },
+                        { id: 320, hanzi: '茶', pinyin: 'chá', meaning: 'Chá', category: 'Médio' },
+                        { id: 321, hanzi: '吃', pinyin: 'chī', meaning: 'Comer', category: 'Médio' },
+                        { id: 322, hanzi: '出租车', pinyin: 'chūzūchē', meaning: 'Táxi', category: 'Médio' },
+                        { id: 323, hanzi: '打电话', pinyin: 'dǎ diànhuà', meaning: 'Fazer ligação telefônica', category: 'Médio' },
+                        { id: 324, hanzi: '大', pinyin: 'dà', meaning: 'Grande', category: 'Médio' },
+                        { id: 325, hanzi: '的', pinyin: 'de', meaning: 'Partícula possessiva', category: 'Médio' },
+                        { id: 326, hanzi: '点', pinyin: 'diǎn', meaning: 'Horas / Ponto', category: 'Médio' },
+                        { id: 327, hanzi: '电脑', pinyin: 'diànnǎo', meaning: 'Computador', category: 'Médio' },
+                        { id: 328, hanzi: '电视', pinyin: 'diànshì', meaning: 'Televisão', category: 'Médio' },
+                        { id: 329, hanzi: '电影', pinyin: 'diànyǐng', meaning: 'Filme', category: 'Médio' },
+                        { id: 330, hanzi: '东西', pinyin: 'dōngxi', meaning: 'Coisa / Objeto', category: 'Médio' },
+                        { id: 331, hanzi: '都', pinyin: 'dōu', meaning: 'Todos / Ambos', category: 'Médio' },
+                        { id: 332, hanzi: '读', pinyin: 'dú', meaning: 'Ler', category: 'Médio' },
+                        { id: 333, hanzi: '对不起', pinyin: 'duìbuqǐ', meaning: 'Desculpe', category: 'Médio' },
+                        { id: 334, hanzi: '多', pinyin: 'duō', meaning: 'Muito', category: 'Médio' },
+                        { id: 335, hanzi: '多少', pinyin: 'duōshao', meaning: 'Quanto(s)', category: 'Médio' },
+                        { id: 336, hanzi: '儿子', pinyin: 'érzi', meaning: 'Filho', category: 'Médio' },
+                        { id: 337, hanzi: '二', pinyin: 'èr', meaning: 'Dois', category: 'Médio' },
+                        { id: 338, hanzi: '饭店', pinyin: 'fàndiàn', meaning: 'Restaurante / Hotel', category: 'Médio' },
+                        { id: 339, hanzi: '飞机', pinyin: 'fēijī', meaning: 'Avião', category: 'Médio' },
+                        { id: 340, hanzi: '分钟', pinyin: 'fēnzhōng', meaning: 'Minuto', category: 'Médio' },
+                        { id: 341, hanzi: '高兴', pinyin: 'gāoxìng', meaning: 'Feliz', category: 'Médio' },
+                        { id: 342, hanzi: '个', pinyin: 'gè', meaning: 'Classificador geral', category: 'Médio' },
+                        { id: 343, hanzi: '工作', pinyin: 'gōngzuò', meaning: 'Trabalhar / Trabalho', category: 'Médio' },
+                        { id: 344, hanzi: '狗', pinyin: 'gǒu', meaning: 'Cachorro', category: 'Médio' },
+                        { id: 345, hanzi: '汉语', pinyin: 'hànyǔ', meaning: 'Língua chinesa', category: 'Médio' },
+                        { id: 346, hanzi: '好', pinyin: 'hǎo', meaning: 'Bom / Bem', category: 'Médio' },
+                        { id: 347, hanzi: '号', pinyin: 'hào', meaning: 'Dia / Número', category: 'Médio' },
+                        { id: 348, hanzi: '喝', pinyin: 'hē', meaning: 'Beber', category: 'Médio' },
+                        { id: 349, hanzi: '和', pinyin: 'hé', meaning: 'E / Com', category: 'Médio' },
+                        { id: 350, hanzi: '很', pinyin: 'hěn', meaning: 'Muito', category: 'Médio' },
+                        { id: 351, hanzi: '后面', pinyin: 'hòumiàn', meaning: 'Atrás', category: 'Médio' },
+                        { id: 352, hanzi: '回', pinyin: 'huí', meaning: 'Voltar', category: 'Médio' },
+                        { id: 353, hanzi: '会', pinyin: 'huì', meaning: 'Saber / Poder', category: 'Médio' },
+                        { id: 354, hanzi: '几', pinyin: 'jǐ', meaning: 'Quantos', category: 'Médio' },
+                        { id: 355, hanzi: '家', pinyin: 'jiā', meaning: 'Casa / Família', category: 'Médio' },
+                        { id: 356, hanzi: '叫', pinyin: 'jiào', meaning: 'Chamar-se', category: 'Médio' },
+                        { id: 357, hanzi: '今天', pinyin: 'jīntiān', meaning: 'Hoje', category: 'Médio' },
+                        { id: 358, hanzi: '九', pinyin: 'jiǔ', meaning: 'Nove', category: 'Médio' },
+                        { id: 359, hanzi: '开', pinyin: 'kāi', meaning: 'Abrir / Dirigir', category: 'Médio' },
+                        { id: 360, hanzi: '看', pinyin: 'kàn', meaning: 'Ver / Olhar / Ler', category: 'Médio' },
+                        { id: 361, hanzi: '看见', pinyin: 'kànjiàn', meaning: 'Enxergar / Ver', category: 'Médio' },
+                        { id: 362, hanzi: '块', pinyin: 'kuài', meaning: 'Unidade monetária (Yuan)', category: 'Médio' },
+                        { id: 363, hanzi: '来', pinyin: 'lái', meaning: 'Vir', category: 'Médio' },
+                        { id: 364, hanzi: '老师', pinyin: 'lǎoshī', meaning: 'Professor', category: 'Médio' },
+                        { id: 365, hanzi: '了', pinyin: 'le', meaning: 'Partícula de ação/mudança', category: 'Médio' },
+                        { id: 366, hanzi: '冷', pinyin: 'lěng', meaning: 'Frio', category: 'Médio' },
+                        { id: 367, hanzi: '里', pinyin: 'lǐ', meaning: 'Dentro', category: 'Médio' },
+                        { id: 368, hanzi: '六', pinyin: 'liù', meaning: 'Seis', category: 'Médio' },
+                        { id: 369, hanzi: '吗', pinyin: 'ma', meaning: 'Partícula de pergunta', category: 'Médio' },
+                        { id: 370, hanzi: '妈妈', pinyin: 'māma', meaning: 'Mãe', category: 'Médio' },
+                        { id: 371, hanzi: '买', pinyin: 'mǎi', meaning: 'Comprar', category: 'Médio' },
+                        { id: 372, hanzi: '猫', pinyin: 'māo', meaning: 'Gato', category: 'Médio' },
+                        { id: 373, hanzi: '没关系', pinyin: 'méi guānxi', meaning: 'Sem problemas', category: 'Médio' },
+                        { id: 374, hanzi: '没有', pinyin: 'méiyǒu', meaning: 'Não ter', category: 'Médio' },
+                        { id: 375, hanzi: '米饭', pinyin: 'mǐfàn', meaning: 'Arroz cozido', category: 'Médio' },
+                        { id: 376, hanzi: '名字', pinyin: 'míngzi', meaning: 'Nome', category: 'Médio' },
+                        { id: 377, hanzi: '明天', pinyin: 'míngtiān', meaning: 'Amanhã', category: 'Médio' },
+                        { id: 378, hanzi: '哪 / 哪儿', pinyin: 'nǎ / nǎr', meaning: 'Qual / Onde', category: 'Médio' },
+                        { id: 379, hanzi: '那', pinyin: 'nà', meaning: 'Aquele / Aquela', category: 'Médio' },
+                        { id: 380, hanzi: '呢', pinyin: 'ne', meaning: 'Partícula interrogativa', category: 'Médio' },
+                        { id: 381, hanzi: '能', pinyin: 'néng', meaning: 'Poder / Ser capaz', category: 'Médio' },
+                        { id: 382, hanzi: '你', pinyin: 'nǐ', meaning: 'Você', category: 'Médio' },
+                        { id: 383, hanzi: '年', pinyin: 'nián', meaning: 'Ano', category: 'Médio' },
+                        { id: 384, hanzi: '女儿', pinyin: 'nǚ\'ér', meaning: 'Filha', category: 'Médio' },
+                        { id: 385, hanzi: '朋友', pinyin: 'péngyou', meaning: 'Amigo', category: 'Médio' },
+                        { id: 386, hanzi: '漂亮', pinyin: 'piàoliang', meaning: 'Bonita', category: 'Médio' },
+                        { id: 387, hanzi: '苹果', pinyin: 'píngguǒ', meaning: 'Maçã', category: 'Médio' },
+                        { id: 388, hanzi: '七', pinyin: 'qī', meaning: 'Sete', category: 'Médio' },
+                        { id: 389, hanzi: '前面', pinyin: 'qiánmiàn', meaning: 'Frente / Em frente', category: 'Médio' },
+                        { id: 390, hanzi: '钱', pinyin: 'qián', meaning: 'Dinheiro', category: 'Médio' },
+                        { id: 391, hanzi: '请', pinyin: 'qǐng', meaning: 'Por favor', category: 'Médio' },
+                        { id: 392, hanzi: '去', pinyin: 'qù', meaning: 'Ir', category: 'Médio' },
+                        { id: 393, hanzi: '热', pinyin: 'rè', meaning: 'Quente', category: 'Médio' },
+                        { id: 394, hanzi: '人', pinyin: 'rén', meaning: 'Pessoa', category: 'Médio' },
+                        { id: 395, hanzi: '认识', pinyin: 'rènshi', meaning: 'Conhecer', category: 'Médio' },
+                        { id: 396, hanzi: '三', pinyin: 'sān', meaning: 'Três', category: 'Médio' },
+                        { id: 397, hanzi: '商店', pinyin: 'shāngdiàn', meaning: 'Loja', category: 'Médio' },
+                        { id: 398, hanzi: '上', pinyin: 'shàng', meaning: 'Cima / Subir', category: 'Médio' },
+                        { id: 399, hanzi: '上午', pinyin: 'shàngwǔ', meaning: 'Manhã', category: 'Médio' },
+                        { id: 400, hanzi: '少', pinyin: 'shǎo', meaning: 'Pouco', category: 'Médio' },
+                        { id: 401, hanzi: '谁', pinyin: 'shéi', meaning: 'Quem', category: 'Médio' },
+                        { id: 402, hanzi: '什么', pinyin: 'shénme', meaning: 'O que', category: 'Médio' },
+                        { id: 403, hanzi: '十', pinyin: 'shí', meaning: 'Dez', category: 'Médio' },
+                        { id: 404, hanzi: '时候', pinyin: 'shíhou', meaning: 'Momento / Tempo', category: 'Médio' },
+                        { id: 405, hanzi: '是', pinyin: 'shì', meaning: 'Ser', category: 'Médio' },
+                        { id: 406, hanzi: '书', pinyin: 'shū', meaning: 'Livro', category: 'Médio' },
+                        { id: 407, hanzi: '水', pinyin: 'shuǐ', meaning: 'Água', category: 'Médio' },
+                        { id: 408, hanzi: '水果', pinyin: 'shuǐguǒ', meaning: 'Fruta', category: 'Médio' },
+                        { id: 409, hanzi: '睡觉', pinyin: 'shuìjiào', meaning: 'Dormir', category: 'Médio' },
+                        { id: 410, hanzi: '说', pinyin: 'shuō', meaning: 'Falar', category: 'Médio' },
+                        { id: 411, hanzi: '四', pinyin: 'sì', meaning: 'Quatro', category: 'Médio' },
+                        { id: 412, hanzi: '岁', pinyin: 'suì', meaning: 'Anos de idade', category: 'Médio' },
+                        { id: 413, hanzi: '他', pinyin: 'tā', meaning: 'Ele', category: 'Médio' },
+                        { id: 414, hanzi: '她', pinyin: 'tā', meaning: 'Ela', category: 'Médio' },
+                        { id: 415, hanzi: '太', pinyin: 'tài', meaning: 'Demais / Tão', category: 'Médio' },
+                        { id: 416, hanzi: '天气', pinyin: 'tiānqì', meaning: 'Clima / Tempo', category: 'Médio' },
+                        { id: 417, hanzi: '听', pinyin: 'tīng', meaning: 'Ouvir', category: 'Médio' },
+                        { id: 418, hanzi: '同学', pinyin: 'tóngxué', meaning: 'Colega', category: 'Médio' },
+                        { id: 419, hanzi: '喂', pinyin: 'wèi', meaning: 'Alô (ao telefone)', category: 'Médio' },
+                        { id: 420, hanzi: '我', pinyin: 'wǒ', meaning: 'Eu', category: 'Médio' },
+                        { id: 421, hanzi: '我们', pinyin: 'wǒmen', meaning: 'Nós', category: 'Médio' },
+                        { id: 422, hanzi: '五', pinyin: 'wǔ', meaning: 'Cinco', category: 'Médio' },
+                        { id: 423, hanzi: '喜欢', pinyin: 'xǐhuan', meaning: 'Gostar', category: 'Médio' },
+                        { id: 424, hanzi: '下', pinyin: 'xià', meaning: 'Baixo / Descer', category: 'Médio' },
+                        { id: 425, hanzi: '下午', pinyin: 'xiàwǔ', meaning: 'Tarde', category: 'Médio' },
+                        { id: 426, hanzi: '下雨', pinyin: 'xià yǔ', meaning: 'Chover', category: 'Médio' },
+                        { id: 427, hanzi: '先生', pinyin: 'xiānsheng', meaning: 'Senhor', category: 'Médio' },
+                        { id: 428, hanzi: '现在', pinyin: 'xiànzài', meaning: 'Agora', category: 'Médio' },
+                        { id: 429, hanzi: '想', pinyin: 'xiǎng', meaning: 'Querer / Pensar', category: 'Médio' },
+                        { id: 430, hanzi: '小', pinyin: 'xiǎo', meaning: 'Pequeno', category: 'Médio' },
+                        { id: 431, hanzi: '小姐', pinyin: 'xiǎojie', meaning: 'Senhorita', category: 'Médio' },
+                        { id: 432, hanzi: '些', pinyin: 'xiē', meaning: 'Alguns / Poucos', category: 'Médio' },
+                        { id: 433, hanzi: '写', pinyin: 'xiě', meaning: 'Escrever', category: 'Médio' },
+                        { id: 434, hanzi: '谢谢', pinyin: 'xièxie', meaning: 'Obrigado(a)', category: 'Médio' },
+                        { id: 435, hanzi: '星期', pinyin: 'xīngqī', meaning: 'Semana', category: 'Médio' },
+                        { id: 436, hanzi: '学生', pinyin: 'xuésheng', meaning: 'Estudante', category: 'Médio' },
+                        { id: 437, hanzi: '学习', pinyin: 'xuéxí', meaning: 'Estudar', category: 'Médio' },
+                        { id: 438, hanzi: '学校', pinyin: 'xuéxiào', meaning: 'Escola', category: 'Médio' },
+                        { id: 439, hanzi: '一', pinyin: 'yī', meaning: 'Um', category: 'Médio' },
+                        { id: 440, hanzi: '一点儿', pinyin: 'yìdiǎnr', meaning: 'Um pouco', category: 'Médio' },
+                        { id: 441, hanzi: '医生', pinyin: 'yīshēng', meaning: 'Médico', category: 'Médio' },
+                        { id: 442, hanzi: '医院', pinyin: 'yīyuàn', meaning: 'Hospital', category: 'Médio' },
+                        { id: 443, hanzi: '衣服', pinyin: 'yīfu', meaning: 'Roupa', category: 'Médio' },
+                        { id: 444, hanzi: '椅子', pinyin: 'yǐzi', meaning: 'Cadeira', category: 'Médio' },
+                        { id: 445, hanzi: '有', pinyin: 'yǒu', meaning: 'Ter / Haver', category: 'Médio' },
+                        { id: 446, hanzi: '月', pinyin: 'yuè', meaning: 'Mês', category: 'Médio' },
+                        { id: 447, hanzi: '再见', pinyin: 'zàijiàn', meaning: 'Tchau', category: 'Médio' },
+                        { id: 448, hanzi: '在', pinyin: 'zài', meaning: 'Estar em', category: 'Médio' },
+                        { id: 449, hanzi: '怎么', pinyin: 'zěnme', meaning: 'Como', category: 'Médio' },
+                        { id: 450, hanzi: '怎么样', pinyin: 'zěnmeyàng', meaning: 'O que acha?', category: 'Médio' },
+                        { id: 451, hanzi: '这', pinyin: 'zhè', meaning: 'Este / Esta', category: 'Médio' },
+                        { id: 452, hanzi: '中国', pinyin: 'zhōngguó', meaning: 'China', category: 'Médio' },
+                        { id: 453, hanzi: '中午', pinyin: 'zhōngwǔ', meaning: 'Meio-dia', category: 'Médio' },
+                        { id: 454, hanzi: '住', pinyin: 'zhù', meaning: 'Morar', category: 'Médio' },
+                        { id: 455, hanzi: '桌子', pinyin: 'zhuōzi', meaning: 'Mesa', category: 'Médio' },
+                        { id: 456, hanzi: '字', pinyin: 'zì', meaning: 'Caractere', category: 'Médio' },
+                        { id: 457, hanzi: '昨天', pinyin: 'zuótiān', meaning: 'Ontem', category: 'Médio' },
+                        { id: 458, hanzi: '做', pinyin: 'zuò', meaning: 'Fazer', category: 'Médio' },
+                        { id: 459, hanzi: '坐', pinyin: 'zuò', meaning: 'Sentar / Viajar de', category: 'Médio' }
+                    ]
+                };
 
-    // 4. Pessoas & Família
-    { hanzi: "我 / 你 / 您", pinyin: "wǒ / nǐ / nín", pt: "Eu / Você / O senhor(a)", sentence: "您好。" },
-    { hanzi: "他 / 她 / 它", pinyin: "tā / tā / tā", pt: "Ele / Ela / Neutro", sentence: "他是谁？" },
-    { hanzi: "我们 / 你们 / 他们", pinyin: "wǒmen / nǐmen / tāmen", pt: "Nós / Vocês / Eles", sentence: "我们是朋友。" },
-    { hanzi: "爸爸 / 妈妈", pinyin: "bàba / māma", pt: "Pai / Mãe", sentence: "我爱我的妈妈。" },
-    { hanzi: "哥哥 / 姐姐 / 弟弟 / 妹妹", pinyin: "gēge / jiějie / dìdi / mèimei", pt: "Irmãos (velhos e novos)", sentence: "我有一个妹妹。" },
+                const decks = ref(JSON.parse(localStorage.getItem('chineseDecks')) || defaultDecks);
 
-    // 5. Tempo & Clima
-    { hanzi: "年 / 月 / 日 / 星期", pinyin: "nián / yuè / rì / xīngqī", pt: "Ano / Mês / Dia / Semana", sentence: "今天是星期一。" },
-    { hanzi: "点 / 分 / 刻 / 秒", pinyin: "diǎn / fēn / kè / miǎo", pt: "Hora / Minuto / 15 min / Segundo", sentence: "现在几点？" },
-    { hanzi: "早上 / 中午 / 晚上", pinyin: "zǎoshang / zhōngwǔ / wǎnshang", pt: "Manhã / Meio-dia / Noite", sentence: "晚上好。" },
-    { hanzi: "今天 / 昨天 / 明天", pinyin: "jīntiān / zuótiān / míngtiān", pt: "Hoje / Ontem / Amanhã", sentence: "明天见。" },
-    { hanzi: "天气 / 冷 / 热 / 雨", pinyin: "tiānqì / lěng / rè / yǔ", pt: "Clima / Frio / Quente / Chuva", sentence: "今天很热。" },
+                // Força a atualização do banco de dados local se o número de categorias originais tiver mudado
+                // (Para evitar que você precise limpar o cache manualmente nesta primeira atualização)
+                if (Object.keys(decks.value).length < 4) {
+                    decks.value = defaultDecks;
+                    localStorage.setItem('chineseDecks', JSON.stringify(defaultDecks));
+                }
 
-    // 6. Lugares & Direções
-    { hanzi: "中国 / 北京 / 上海", pinyin: "Zhōngguó / Běijīng / Shànghǎi", pt: "China / Pequim / Xangai", sentence: "我在中国。" },
-    { hanzi: "邮局 / 银行 / 书店", pinyin: "yóujú / yínháng / shūdiàn", pt: "Correios / Banco / Livraria", sentence: "银行在哪里？" },
-    { hanzi: "哪里 / 这里 / 那里", pinyin: "nǎli / zhèlǐ / nàli", pt: "Onde / Aqui / Lá", sentence: "你在这里吗？" },
-    { hanzi: "上面 / 下面 / 前面 / 后面", pinyin: "shàngmiàn / xiàmiàn / qiánmiàn / hòumiàn", pt: "Cima / Baixo / Frente / Atrás", sentence: "前面有人。" },
+                // Salva automaticamente no localStorage sempre que houver mudanças nas categorias
+                watch(decks, (newDecks) => {
+                    localStorage.setItem('chineseDecks', JSON.stringify(newDecks));
+                }, { deep: true });
 
-    // 7. Objetos & Transporte
-    { hanzi: "电脑 / 电视 / 手机", pinyin: "diànnǎo / diànshì / shǒujī", pt: "Computador / TV / Celular", sentence: "这是我的手机。" },
-    { hanzi: "桌子 / 椅子", pinyin: "zhuōzi / yǐzi", pt: "Mesa / Cadeira", sentence: "桌子上有书。" },
-    { hanzi: "车 / 地铁 / 出租车 / 飞机", pinyin: "chē / dìtiě / chūzūchē / fēijī", pt: "Carro / Metrô / Táxi / Avião", sentence: "我坐地铁去。" },
+                const drawNextCard = () => {
+                    flipped.value = false;
+                    const cards = decks.value[activeDeck.value];
+                    if (!cards || cards.length === 0) {
+                        currentCard.value = null;
+                        return;
+                    }
 
-    // 8. Animais & Classificadores
-    { hanzi: "狗 / 猫", pinyin: "gǒu / māo", pt: "Cachorro / Gato", sentence: "我有一只猫。" },
-    { hanzi: "个 / 只 / 本 / 块 / 杯", pinyin: "gè / zhī / běn / kuài / bēi", pt: "Classificadores", sentence: "我要一杯水。" },
+                    // Sistema de pesos (Cartões difíceis têm mais chance de aparecer)
+                    const weights = { 'Muito Difícil': 50, 'Difícil': 30, 'Médio': 15, 'Fácil': 5 };
+                    let pool = [];
+                    
+                    cards.forEach(card => {
+                        const weight = weights[card.category] || 15;
+                        for (let i = 0; i < weight; i++) pool.push(card);
+                    });
 
-    // 9. Adjetivos & Expressões
-    { hanzi: "大 / 小 / 多 / 少", pinyin: "dà / xiǎo / duō / shǎo", pt: "Grande / Pequeno / Muito / Pouco", sentence: "人很多。" },
-    { hanzi: "好 / 坏 / 漂亮 / 酷", pinyin: "hǎo / huài / piàoliang / kù", pt: "Bom / Ruim / Bonito / Legal", sentence: "你很漂亮。" },
-    { hanzi: "高兴 / 饿 / 渴", pinyin: "gāoxìng / è / kě", pt: "Feliz / Com fome / Com sede", sentence: "我饿了。" },
-    { hanzi: "贵 / 便宜 / 高", pinyin: "guì / piányi / gāo", pt: "Caro / Barato / Alto", sentence: "太贵了！" },
-    { hanzi: "你好 / 再见", pinyin: "nǐhǎo / zàijiàn", pt: "Cumprimentos / Despedidas", sentence: "你好！" },
-    { hanzi: "谢谢 / 不客气 / 对不起", pinyin: "xièxie / bú kèqi / duìbuqǐ", pt: "Cortesia diária", sentence: "谢谢你。" },
-    { hanzi: "怎么 / 多少 / 谁 / 什么", pinyin: "zěnme / duōshao / shéi / shénme", pt: "Pronomes interrogativos", sentence: "这是什么？" }
-        ];
+                    // Seleção aleatória baseada nos pesos (embaralhado dinamicamente)
+                    const randomIndex = Math.floor(Math.random() * pool.length);
+                    currentCard.value = pool[randomIndex];
+                };
 
-        let queue = [...flashcards];
-        let learning = [];
-        let mastered = [];
-        let currentCard = null;
-        let isRevealed = false;
+                const rateCard = (category) => {
+                    if (currentCard.value) {
+                        currentCard.value.category = category;
+                        drawNextCard();
+                    }
+                };
 
-        function updateStats() {
-            document.getElementById('queue-count').textContent = `Fila: ${queue.length}`;
-            document.getElementById('learning-count').textContent = `Aprender: ${learning.length}`;
-            document.getElementById('mastered-count').textContent = `Dominadas: ${mastered.length}`;
-        }
+                const playSound = (text) => {
+                    const msg = new SpeechSynthesisUtterance();
+                    msg.text = text;
+                    msg.lang = 'zh-CN'; // Define o sotaque e voz para Chinês Mandarim
+                    window.speechSynthesis.speak(msg);
+                };
 
-        function loadNextCard() {
-            if (queue.length === 0 && learning.length === 0) {
-                document.getElementById('hanzi').textContent = "🎉";
-                document.getElementById('pinyin').textContent = "Tudo concluído!";
-                document.getElementById('portuguese').textContent = "Você revisou todas as palavras.";
-                document.getElementById('sentence').textContent = "";
-                document.getElementById('details').style.display = 'flex';
-                document.getElementById('controls').style.display = 'none';
-                document.getElementById('hint').style.display = 'none';
-                return;
+                const countCategory = (deckCards, category) => deckCards.filter(c => c.category === category).length;
+
+                watch(activeDeck, drawNextCard);
+                onMounted(drawNextCard);
+
+                return { currentTab, activeDeck, decks, currentCard, flipped, rateCard, playSound, countCategory };
             }
-
-            // Pega da fila principal, se acabar pega das que estão aprendendo
-            currentCard = queue.length > 0 ? queue.shift() : learning.shift();
-            
-            document.getElementById('hanzi').textContent = currentCard.hanzi;
-            document.getElementById('pinyin').textContent = currentCard.pinyin;
-            document.getElementById('portuguese').textContent = currentCard.pt;
-            document.getElementById('sentence').textContent = currentCard.sentence;
-
-            isRevealed = false;
-            document.getElementById('details').style.display = 'none';
-            document.getElementById('controls').style.display = 'none';
-            document.getElementById('hint').style.display = 'block';
-            
-            updateStats();
-        }
-
-        function revealCard() {
-            if (isRevealed || !currentCard) return;
-            isRevealed = true;
-            document.getElementById('details').style.display = 'flex';
-            document.getElementById('hint').style.display = 'none';
-            document.getElementById('controls').style.display = 'flex';
-            playAudio();
-        }
-
-        function rateCard(rating) {
-            if (rating === 'hard') {
-                learning.push(currentCard); // Volta pro fim da fila de aprendizado
-            } else if (rating === 'good') {
-                mastered.push(currentCard); // Conta como dominada, mas num app real voltaria amanhã
-            } else if (rating === 'easy') {
-                mastered.push(currentCard);
-            }
-            loadNextCard();
-        }
-
-        function playAudio() {
-            if (!currentCard) return;
-            const utterance = new SpeechSynthesisUtterance(currentCard.hanzi);
-            utterance.lang = 'zh-CN'; // Voz nativa em mandarim
-            utterance.rate = 0.8; // Velocidade ligeiramente mais lenta
-            window.speechSynthesis.speak(utterance);
-        }
-
-        function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            html.setAttribute('data-theme', currentTheme === 'light' ? 'dark' : 'light');
-        }
-
-        loadNextCard();
+        }).mount('#app');
     </script>
 </body>
 </html>
